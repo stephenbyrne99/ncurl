@@ -201,21 +201,21 @@ func TestSearchHistory(t *testing.T) {
 func TestPromptForHistorySelectionStructure(t *testing.T) {
 	// Declare a local variable to hold the type signature we expect
 	var promptFunc func() (string, error)
-	
+
 	// Get pointer to a valid manager
 	manager := &Manager{
 		historyFile: "test-file.json",
 		maxEntries:  10,
 	}
-	
+
 	// Type assertion to verify function has expected signature
 	promptFunc = manager.PromptForHistorySelection
-	
+
 	// Check that promptFunc is not nil and has expected signature
 	if promptFunc == nil {
 		t.Fatalf("PromptForHistorySelection should not be nil")
 	}
-	
+
 	// We don't actually call the function as it requires user input
 	// This is just a type check
 }

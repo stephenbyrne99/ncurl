@@ -94,7 +94,7 @@ func main() {
 
 	// Get the command to execute - either from history, interactive selection, or command line args
 	var prompt string
-	
+
 	switch {
 	case *interactiveHistory && historyManager != nil:
 		// Get command from interactive history selection
@@ -106,7 +106,7 @@ func main() {
 		}
 		prompt = cmd
 		debugLogger.Printf("Selected command from history: %s", prompt)
-		
+
 	case *historyRerun > 0 && historyManager != nil:
 		// Get command from history by index
 		entry, err := historyManager.GetEntryByIndex(*historyRerun)
@@ -117,7 +117,7 @@ func main() {
 		}
 		prompt = entry.Command
 		debugLogger.Printf("Rerunning command from history: %s", prompt)
-		
+
 	default:
 		// Get command from command line args
 		args := flag.Args()
@@ -182,7 +182,7 @@ func main() {
 	response, err := httpx.ExecuteWithContext(ctx, spec)
 	if err != nil {
 		var reqErr *httpx.RequestError
-		
+
 		switch {
 		case errors.As(err, &reqErr):
 			errorLogger.Printf("Request error: %v\n", reqErr)
@@ -193,7 +193,7 @@ func main() {
 		default:
 			errorLogger.Printf("Request failed: %v\n", err)
 		}
-		
+
 		exitCode = 1
 		return
 	}
