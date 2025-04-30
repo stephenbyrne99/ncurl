@@ -26,7 +26,7 @@ func TestNewClient(t *testing.T) {
 
 	// Test with options
 	mockClient := anthropic.NewClient()
-	client = NewClient(testModel, WithAnthropicClient(mockClient))
+	client = NewClient(testModel, WithAnthropicClient(&mockClient))
 	if client.model != testModel {
 		t.Errorf("Expected model to be %s, got %s", testModel, client.model)
 	}
