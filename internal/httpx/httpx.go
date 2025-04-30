@@ -115,7 +115,7 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 			Method:  spec.Method,
 		}
 	}
-	
+
 	var closeErr error
 	defer func() {
 		if cerr := resp.Body.Close(); cerr != nil && closeErr == nil {
@@ -132,9 +132,9 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 			Method:  spec.Method,
 		}
 	}
-	
+
 	result := &Response{Response: resp, Body: body}
-	
+
 	if closeErr != nil {
 		// Return response but with an error
 		err := &RequestError{

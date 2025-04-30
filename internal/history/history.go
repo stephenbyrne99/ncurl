@@ -81,7 +81,7 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 	if openErr != nil {
 		return nil, fmt.Errorf("failed to open history file: %w", openErr)
 	}
-	
+
 	var closeErr error
 	defer func() {
 		if cerr := file.Close(); cerr != nil && closeErr == nil {
@@ -94,7 +94,7 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 	if decodeErr != nil {
 		return nil, fmt.Errorf("failed to decode history data: %w", decodeErr)
 	}
-	
+
 	if closeErr != nil {
 		return entries, fmt.Errorf("warning: failed to close history file: %w", closeErr)
 	}
@@ -108,7 +108,7 @@ func (m *Manager) saveEntries(entries []HistoryEntry) error {
 	if createErr != nil {
 		return fmt.Errorf("failed to create history file: %w", createErr)
 	}
-	
+
 	var closeErr error
 	defer func() {
 		if cerr := file.Close(); cerr != nil && closeErr == nil {
@@ -122,7 +122,7 @@ func (m *Manager) saveEntries(entries []HistoryEntry) error {
 	if encodeErr != nil {
 		return fmt.Errorf("failed to encode history data: %w", encodeErr)
 	}
-	
+
 	if closeErr != nil {
 		return fmt.Errorf("warning: failed to close history file: %w", closeErr)
 	}

@@ -204,7 +204,7 @@ func TestPromptForHistorySelectionStructure(t *testing.T) {
 		historyFile: "test-file.json",
 		maxEntries:  10,
 	}
-	
+
 	// We don't actually call the function as it requires user input,
 	// but we verify the function exists with correct signature
 	_, ok := interface{}(manager.PromptForHistorySelection).(func() (string, error))
