@@ -49,16 +49,20 @@ jobs:
           
       - name: Extract version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        
-      - name: Verify version extraction
         run: |
-          echo "Extracted version: $VERSION"
-          # Ensure version is properly formatted (e.g., "1.2.3")
+          # Extract the version number from the Git tag
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "Raw version from tag: $VERSION"
+          
+          # Validate the version format
           if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\.]+)?$ ]]; then
             echo "Error: Version format is invalid: $VERSION"
+            echo "Expected format: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-PRERELEASE"
             exit 1
           fi
+          
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+          echo "Using version: $VERSION"
           
       - name: Update package.json version
         run: |

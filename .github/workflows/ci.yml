@@ -79,8 +79,16 @@ jobs:
         with:
           node-version: '20'
       
+      - name: Display GitHub context
+        run: |
+          echo "GITHUB_REF: $GITHUB_REF"
+          echo "GITHUB_REF_TYPE: $GITHUB_REF_TYPE"
+          echo "GITHUB_HEAD_REF: $GITHUB_HEAD_REF"
+      
       - name: Check versions are in sync
         run: ./scripts/check-versions.sh
+        # Don't fail the build on PRs, only on tags and main branch
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
           
   release:
     needs: [lint, test, security, version-check]

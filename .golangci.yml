@@ -1,0 +1,47 @@
+linters:
+  enable:
+    - gofmt
+    - govet
+    - goimports
+    - misspell
+    - gosec
+    - ineffassign
+    - staticcheck
+    - unconvert
+    - unused
+    - gosimple
+    - gocritic
+  disable:
+    - errcheck
+    - wsl
+    - lll
+    - godox
+    - gochecknoglobals
+    - gochecknoinits
+    - gocyclo
+
+linters-settings:
+  govet:
+    check-shadowing: true
+  gofmt:
+    simplify: true
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+    disabled-checks:
+      - commentFormatting
+  staticcheck:
+    go: "1.22"
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gosec
+
+run:
+  deadline: 5m
+  tests: true

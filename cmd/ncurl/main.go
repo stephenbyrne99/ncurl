@@ -33,16 +33,16 @@ var (
 
 var (
 	// Command line flags
-	timeout         = flag.Int("t", 30, "Timeout in seconds for the HTTP request")
-	model           = flag.String("m", anthropic.ModelClaude3_7SonnetLatest, "Anthropic model to use")
-	jsonOnly        = flag.Bool("j", false, "Output response body as JSON only")
-	verbose         = flag.Bool("v", false, "Verbose output (include request details)")
-	showVersion     = flag.Bool("version", false, "Show version information")
-	debug           = flag.Bool("debug", false, "Enable debug logging")
-	showHistory     = flag.Bool("history", false, "Show command history")
-	historyCount    = flag.Int("history-count", 50, "Maximum number of history entries to keep")
-	historyRerun    = flag.Int("rerun", 0, "Rerun a command from history by index")
-	historySearch   = flag.String("search", "", "Search command history for a term")
+	timeout            = flag.Int("t", 30, "Timeout in seconds for the HTTP request")
+	model              = flag.String("m", anthropic.ModelClaude3_7SonnetLatest, "Anthropic model to use")
+	jsonOnly           = flag.Bool("j", false, "Output response body as JSON only")
+	verbose            = flag.Bool("v", false, "Verbose output (include request details)")
+	showVersion        = flag.Bool("version", false, "Show version information")
+	debug              = flag.Bool("debug", false, "Enable debug logging")
+	showHistory        = flag.Bool("history", false, "Show command history")
+	historyCount       = flag.Int("history-count", 50, "Maximum number of history entries to keep")
+	historyRerun       = flag.Int("rerun", 0, "Rerun a command from history by index")
+	historySearch      = flag.String("search", "", "Search command history for a term")
 	interactiveHistory = flag.Bool("i", false, "Interactive history selection mode")
 )
 
@@ -136,7 +136,7 @@ func main() {
 	}
 
 	debugLogger.Printf("Processing natural language request: %s", prompt)
-	
+
 	// Record command in history when exiting
 	defer func() {
 		if historyManager != nil {

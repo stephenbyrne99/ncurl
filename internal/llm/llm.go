@@ -63,11 +63,11 @@ func cleanJSONResponse(input string) string {
 	// If no code block found, try to find json content directly
 	jsonStart := strings.Index(input, "{")
 	jsonEnd := strings.LastIndex(input, "}")
-	
+
 	if jsonStart >= 0 && jsonEnd > jsonStart {
 		return strings.TrimSpace(input[jsonStart : jsonEnd+1])
 	}
-	
+
 	// If all else fails, return the original input
 	return strings.TrimSpace(input)
 }

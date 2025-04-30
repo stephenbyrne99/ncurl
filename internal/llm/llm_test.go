@@ -74,15 +74,15 @@ func TestGenerateRequestSpec(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			spec, err := client.GenerateRequestSpec(ctx, tc.prompt)
-			
+
 			if (err != nil) != tc.wantErr {
 				t.Fatalf("GenerateRequestSpec() error = %v, wantErr %v", err, tc.wantErr)
 			}
-			
+
 			if tc.wantErr {
 				return
 			}
-			
+
 			if spec.Method != tc.wantMethod {
 				t.Errorf("Expected method %s, got %s", tc.wantMethod, spec.Method)
 			}
@@ -122,14 +122,14 @@ func TestModelError(t *testing.T) {
 	for i := 0; i < 200; i++ {
 		longJSON += "x"
 	}
-	
+
 	modelErrLong := &ModelError{
 		Err:     origErr,
 		Message: "test message",
 		Model:   "claude-3",
 		RawJSON: longJSON,
 	}
-	
+
 	errMsgLong := modelErrLong.Error()
 	if len(errMsgLong) >= len(longJSON) {
 		t.Error("Expected truncated JSON in error message")
@@ -143,19 +143,19 @@ func TestContextCancellation(t *testing.T) {
 	}
 
 	client := NewClient("")
-	
+
 	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
 	defer cancel()
-	
+
 	// Wait a bit to ensure timeout happens
 	time.Sleep(5 * time.Millisecond)
-	
+
 	_, err := client.GenerateRequestSpec(ctx, "get https://example.com")
 	if err == nil {
 		t.Error("Expected error with cancelled context, got nil")
 	}
-	
+
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("Expected DeadlineExceeded error, got %v", err)
 	}
