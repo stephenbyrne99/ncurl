@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -105,38 +106,46 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 	client := &http.Client{
 		Timeout: 30 * time.Second, // Default timeout
 	}
-	resp, err := client.Do(req)
-	if err != nil {
+	resp, doErr := client.Do(req)
+	if doErr != nil {
 		return nil, &RequestError{
-			Err:     fmt.Errorf("%w: %v", ErrRequestFailed, err),
+			Err:     fmt.Errorf("%w: %v", ErrRequestFailed, doErr),
 			Message: "request failed",
 			URL:     spec.URL,
 			Method:  spec.Method,
 		}
 	}
+	
+	var closeErr error
 	defer func() {
-		if closeErr := resp.Body.Close(); closeErr != nil {
-			// If we already have an error, don't override it
-			if err == nil {
-				err = &RequestError{
-					Err:     closeErr,
-					Message: "failed to close response body",
-					URL:     spec.URL,
-					Method:  spec.Method,
-				}
-			}
+		if cerr := resp.Body.Close(); cerr != nil && closeErr == nil {
+			closeErr = cerr
 		}
 	}()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
+	body, readErr := io.ReadAll(resp.Body)
+	if readErr != nil {
 		return nil, &RequestError{
-			Err:     fmt.Errorf("%w: %v", ErrReadResponse, err),
+			Err:     fmt.Errorf("%w: %v", ErrReadResponse, readErr),
 			Message: "failed to read response body",
 			URL:     spec.URL,
 			Method:  spec.Method,
 		}
 	}
+	
+	result := &Response{Response: resp, Body: body}
+	
+	if closeErr != nil {
+		// Return response but with an error
+		err := &RequestError{
+			Err:     closeErr,
+			Message: "failed to close response body",
+			URL:     spec.URL,
+			Method:  spec.Method,
+		}
+		// Log the error but still return the response
+		fmt.Fprintf(os.Stderr, "Warning: %v\n", err)
+	}
 
-	return &Response{Response: resp, Body: body}, nil
+	return result, nil
 }

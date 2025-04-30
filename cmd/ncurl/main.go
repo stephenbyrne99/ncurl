@@ -37,6 +37,7 @@ var (
 	jsonOnly           = flag.Bool("j", false, "Output response body as JSON only")
 	verbose            = flag.Bool("v", false, "Verbose output (include request details)")
 	showVersion        = flag.Bool("version", false, "Show version information")
+	showHelp           = flag.Bool("help", false, "Show detailed help with usage examples")
 	debug              = flag.Bool("debug", false, "Enable debug logging")
 	showHistory        = flag.Bool("history", false, "Show command history")
 	historyCount       = flag.Int("history-count", 50, "Maximum number of history entries to keep")
@@ -44,6 +45,56 @@ var (
 	historySearch      = flag.String("search", "", "Search command history for a term")
 	interactiveHistory = flag.Bool("i", false, "Interactive history selection mode")
 )
+
+// printHelp displays detailed usage information and examples
+func printHelp() {
+	helpText := `ncurl - curl in English
+
+DESCRIPTION
+  ncurl allows you to describe HTTP requests in plain English, and it will 
+  translate your natural language into proper HTTP requests.
+
+USAGE
+  ncurl [options] "<natural language request>"
+
+OPTIONS
+  -t <seconds>       Set timeout in seconds (default: 30)
+  -m <model>         Specify Anthropic model to use (default: claude-3-7-sonnet)
+  -j                 Output response body as JSON only
+  -v                 Verbose output (include request details)
+  -version           Show version information
+  -help              Show this detailed help message
+  -debug             Enable debug logging
+
+HISTORY OPTIONS
+  -history           Show command history
+  -history-count <n> Maximum number of history entries to keep (default: 50)
+  -rerun <n>         Rerun a command from history by index
+  -search <term>     Search command history for a term
+  -i                 Interactive history selection mode
+
+EXAMPLES
+  # Simple GET request
+  ncurl "get the latest weather for London"
+
+  # POST with JSON data
+  ncurl "post a new user with name 'John' and email 'john@example.com' to jsonplaceholder"
+
+  # Specify headers and authentication
+  ncurl "get my GitHub repos with authorization token ghp_abc123"
+
+  # Use -j flag for JSON-only output (useful for piping to jq)
+  ncurl -j "get COVID data for New York" | jq '.cases'
+
+  # View and rerun command history
+  ncurl -history
+  ncurl -rerun 3
+
+ENVIRONMENT
+  ANTHROPIC_API_KEY  Required API key for the Anthropic Claude API, add this to your .zshrc or .bashrc
+`
+	fmt.Println(helpText)
+}
 
 func main() {
 	// Set up exit code handling
@@ -70,6 +121,12 @@ func main() {
 		fmt.Printf("ncurl version %s\n", version)
 		fmt.Printf("commit: %s\n", commit)
 		fmt.Printf("built: %s\n", date)
+		return
+	}
+
+	// Show detailed help if requested
+	if *showHelp {
+		printHelp()
 		return
 	}
 
@@ -123,6 +180,10 @@ func main() {
 		args := flag.Args()
 		if len(args) < 1 {
 			fmt.Println("usage: ncurl [options] \"<natural language request>\"")
+			fmt.Println("\nExamples:")
+			fmt.Println("  ncurl \"get the weather for New York\"")
+			fmt.Println("  ncurl \"post a new user to jsonplaceholder\"")
+			fmt.Println("\nUse -help for detailed usage information and more examples")
 			fmt.Println("\nOptions:")
 			flag.PrintDefaults()
 			exitCode = 1

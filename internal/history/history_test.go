@@ -199,28 +199,21 @@ func TestSearchHistory(t *testing.T) {
 // TestPromptForHistorySelectionStructure just verifies the function signature - not actual functionality
 // since we can't easily test interactive prompts in unit tests
 func TestPromptForHistorySelectionStructure(t *testing.T) {
-	// Declare a local variable to hold the type signature we expect
-	var promptFunc func() (string, error)
-
 	// Get pointer to a valid manager
 	manager := &Manager{
 		historyFile: "test-file.json",
 		maxEntries:  10,
 	}
-
-	// Type assertion to verify function has expected signature
-	promptFunc = manager.PromptForHistorySelection
-
-	// Check that promptFunc is not nil and has expected signature
-	if promptFunc == nil {
-		t.Fatalf("PromptForHistorySelection should not be nil")
+	
+	// We don't actually call the function as it requires user input,
+	// but we verify the function exists with correct signature
+	_, ok := interface{}(manager.PromptForHistorySelection).(func() (string, error))
+	if !ok {
+		t.Fatalf("PromptForHistorySelection does not have expected signature func() (string, error)")
 	}
-
-	// We don't actually call the function as it requires user input
-	// This is just a type check
 }
 
-// Fix for test compilation
+// f is a shorthand for fmt.Sprintf
 func f(format string, args ...interface{}) string {
 	return fmt.Sprintf(format, args...)
 }

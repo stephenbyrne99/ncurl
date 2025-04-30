@@ -77,22 +77,26 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 		return []HistoryEntry{}, nil
 	}
 
-	file, err := os.Open(m.historyFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open history file: %w", err)
+	file, openErr := os.Open(m.historyFile)
+	if openErr != nil {
+		return nil, fmt.Errorf("failed to open history file: %w", openErr)
 	}
+	
+	var closeErr error
 	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			// If we already have an error, don't override it
-			if err == nil {
-				err = fmt.Errorf("failed to close history file: %w", closeErr)
-			}
+		if cerr := file.Close(); cerr != nil && closeErr == nil {
+			closeErr = cerr
 		}
 	}()
 
 	var entries []HistoryEntry
-	if err := json.NewDecoder(file).Decode(&entries); err != nil {
-		return nil, fmt.Errorf("failed to decode history data: %w", err)
+	decodeErr := json.NewDecoder(file).Decode(&entries)
+	if decodeErr != nil {
+		return nil, fmt.Errorf("failed to decode history data: %w", decodeErr)
+	}
+	
+	if closeErr != nil {
+		return entries, fmt.Errorf("warning: failed to close history file: %w", closeErr)
 	}
 
 	return entries, nil
@@ -100,23 +104,27 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 
 // saveEntries writes entries to the history file
 func (m *Manager) saveEntries(entries []HistoryEntry) error {
-	file, err := os.Create(m.historyFile)
-	if err != nil {
-		return fmt.Errorf("failed to create history file: %w", err)
+	file, createErr := os.Create(m.historyFile)
+	if createErr != nil {
+		return fmt.Errorf("failed to create history file: %w", createErr)
 	}
+	
+	var closeErr error
 	defer func() {
-		if closeErr := file.Close(); closeErr != nil {
-			// If we already have an error, don't override it
-			if err == nil {
-				err = fmt.Errorf("failed to close history file: %w", closeErr)
-			}
+		if cerr := file.Close(); cerr != nil && closeErr == nil {
+			closeErr = cerr
 		}
 	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(entries); err != nil {
-		return fmt.Errorf("failed to encode history data: %w", err)
+	encodeErr := encoder.Encode(entries)
+	if encodeErr != nil {
+		return fmt.Errorf("failed to encode history data: %w", encodeErr)
+	}
+	
+	if closeErr != nil {
+		return fmt.Errorf("warning: failed to close history file: %w", closeErr)
 	}
 
 	return nil
