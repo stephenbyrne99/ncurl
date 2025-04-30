@@ -26,7 +26,6 @@ var (
 
 // Logger instances for different levels
 var (
-	infoLogger  = log.New(os.Stdout, "INFO: ", log.LstdFlags)
 	errorLogger = log.New(os.Stderr, "ERROR: ", log.LstdFlags)
 	debugLogger = log.New(os.Stdout, "DEBUG: ", log.LstdFlags)
 )

@@ -142,10 +142,18 @@ func TestSearchHistory(t *testing.T) {
 	}
 
 	// Add some test entries
-	manager.AddEntry("GET github API", true)
-	manager.AddEntry("POST user data", false)
-	manager.AddEntry("GET weather data", true)
-	manager.AddEntry("DELETE user", true)
+	if err := manager.AddEntry("GET github API", true); err != nil {
+		t.Fatalf("Failed to add entry: %v", err)
+	}
+	if err := manager.AddEntry("POST user data", false); err != nil {
+		t.Fatalf("Failed to add entry: %v", err)
+	}
+	if err := manager.AddEntry("GET weather data", true); err != nil {
+		t.Fatalf("Failed to add entry: %v", err)
+	}
+	if err := manager.AddEntry("DELETE user", true); err != nil {
+		t.Fatalf("Failed to add entry: %v", err)
+	}
 
 	// Test searching for "GET"
 	results, err := manager.SearchHistory("GET")

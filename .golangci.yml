@@ -11,8 +11,8 @@ linters:
     - unused
     - gosimple
     - gocritic
-  disable:
     - errcheck
+  disable:
     - wsl
     - lll
     - godox
