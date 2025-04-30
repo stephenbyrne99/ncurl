@@ -43,6 +43,7 @@ var (
 	historyCount    = flag.Int("history-count", 50, "Maximum number of history entries to keep")
 	historyRerun    = flag.Int("rerun", 0, "Rerun a command from history by index")
 	historySearch   = flag.String("search", "", "Search command history for a term")
+	interactiveHistory = flag.Bool("i", false, "Interactive history selection mode")
 )
 
 func main() {
@@ -92,9 +93,19 @@ func main() {
 		}
 	}
 
-	// Get the command to execute - either from history or command line args
+	// Get the command to execute - either from history, interactive selection, or command line args
 	var prompt string
-	if *historyRerun > 0 && historyManager != nil {
+	if *interactiveHistory && historyManager != nil {
+		// Get command from interactive history selection
+		cmd, err := historyManager.PromptForHistorySelection()
+		if err != nil {
+			errorLogger.Printf("Failed to select from history: %v\n", err)
+			exitCode = 1
+			return
+		}
+		prompt = cmd
+		debugLogger.Printf("Selected command from history: %s", prompt)
+	} else if *historyRerun > 0 && historyManager != nil {
 		// Get command from history by index
 		entry, err := historyManager.GetEntryByIndex(*historyRerun)
 		if err != nil {

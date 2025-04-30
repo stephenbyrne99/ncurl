@@ -1,0 +1,35 @@
+{
+  "name": "nlcurl",
+  "version": "0.1.0",
+  "description": "curl in English - describe HTTP requests in plain language",
+  "bin": {
+    "nlcurl": "./bin/nlcurl.js"
+  },
+  "scripts": {
+    "postinstall": "node ./scripts/install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stephenbyrne99/ncurl.git"
+  },
+  "keywords": [
+    "curl",
+    "http",
+    "cli",
+    "llm",
+    "ai"
+  ],
+  "author": "Stephen Byrne",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/stephenbyrne99/ncurl/issues"
+  },
+  "homepage": "https://github.com/stephenbyrne99/ncurl#readme",
+  "dependencies": {
+    "binary-install": "^1.0.1"
+  },
+  "files": [
+    "bin",
+    "scripts"
+  ]
+}

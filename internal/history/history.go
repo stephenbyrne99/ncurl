@@ -197,3 +197,42 @@ func (m *Manager) PrintSearchResults(term string) error {
 
 	return nil
 }
+
+// PromptForHistorySelection displays an interactive history menu and returns the selected command
+func (m *Manager) PromptForHistorySelection() (string, error) {
+	entries, err := m.GetEntries()
+	if err != nil {
+		return "", err
+	}
+
+	if len(entries) == 0 {
+		return "", fmt.Errorf("no command history available")
+	}
+
+	fmt.Println("Command History:")
+	fmt.Println("---------------")
+	for i, entry := range entries {
+		status := "✓"
+		if !entry.Success {
+			status = "✗"
+		}
+		fmt.Printf("%d. [%s] %s (%s)\n", i+1, status, entry.Command, entry.Timestamp.Format("2006-01-02 15:04:05"))
+	}
+
+	var selectedIndex int
+	fmt.Print("\nEnter number to select command (or 0 to cancel): ")
+	_, err = fmt.Scanln(&selectedIndex)
+	if err != nil {
+		return "", fmt.Errorf("failed to read input: %w", err)
+	}
+
+	if selectedIndex == 0 {
+		return "", fmt.Errorf("selection cancelled")
+	}
+
+	if selectedIndex < 1 || selectedIndex > len(entries) {
+		return "", fmt.Errorf("invalid selection: %d (valid range: 1-%d)", selectedIndex, len(entries))
+	}
+
+	return entries[selectedIndex-1].Command, nil
+}

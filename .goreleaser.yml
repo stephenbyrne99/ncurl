@@ -1,6 +1,11 @@
 # GoReleaser configuration for ncurl
 project_name: ncurl
 
+before:
+  hooks:
+    - go mod tidy
+    - go test ./...
+
 builds:
   - id: ncurl
     main: ./cmd/ncurl
@@ -32,34 +37,49 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+    files:
+      - README.md
+      - LICENSE
 
 checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
   algorithm: sha256
 
+snapshot:
+  name_template: "{{ .Tag }}-snapshot"
+
 changelog:
   sort: asc
+  use: github
+  groups:
+    - title: Features
+      regexp: "^.*feat[(\\w)]*!?:+.*$"
+      order: 0
+    - title: 'Bug fixes'
+      regexp: "^.*fix[(\\w)]*!?:+.*$"
+      order: 1
+    - title: Others
+      order: 999
   filters:
     exclude:
       - '^docs:'
       - '^test:'
+      - '^ci:'
       - Merge pull request
       - Merge branch
 
 brews:
   - name: ncurl
     tap:
-      owner: "{{.Env.HOMEBREW_TAP_OWNER}}"
-      name: "{{.Env.HOMEBREW_TAP_REPO}}"
-    url_template: "https://github.com/{{.Env.GITHUB_REPOSITORY}}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      owner: stephenbyrne99
+      name: homebrew-tap
     commit_author:
       name: goreleaserbot
       email: goreleaser@carlosbecker.com
-    description: "Natural language curl command with LLM support"
-    homepage: "https://github.com/{{.Env.GITHUB_REPOSITORY}}"
+    description: "curl in English - describe HTTP requests in plain language"
+    homepage: "https://github.com/stephenbyrne99/ncurl"
     license: "MIT"
     test: |
-      system "#{bin}/ncurl --version"
+      system "#{bin}/ncurl", "--version"
     install: |
       bin.install "ncurl"
-EOF < /dev/null

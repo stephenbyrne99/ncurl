@@ -29,7 +29,7 @@ ncurl "download https://httpbin.org/get"
 ncurl -t 10 "POST to httpbin with a name field beind hello"
 
 # Pipe prettified JSON through jq
-ncurl "get goland github | jq '.body | fromjson | .stargazers_count'
+ncurl "get  github stephenbyrne99 ncurl repo"  | jq '.body | fromjson | .stargazers_count'
 ```
 
 ---

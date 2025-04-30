@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      
+      - name: Update CHANGELOG
+        id: changelog
+        uses: Requarks/changelog-action@v1
+        with:
+          token: ${{ github.token }}
+          tag: ${{ github.ref_name }}
+      
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  publish-npm:
+    needs: [release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org/'
+          
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+        
+      - name: Verify version extraction
+        run: |
+          echo "Extracted version: $VERSION"
+          # Ensure version is properly formatted (e.g., "1.2.3")
+          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\.]+)?$ ]]; then
+            echo "Error: Version format is invalid: $VERSION"
+            exit 1
+          fi
+          
+      - name: Update package.json version
+        run: |
+          cd npm
+          npm version $VERSION --no-git-tag-version
+          
+      - name: Verify npm package version
+        run: |
+          cd npm
+          NPM_VERSION=$(node -p "require('./package.json').version")
+          echo "NPM package.json version: $NPM_VERSION"
+          if [ "$NPM_VERSION" != "$VERSION" ]; then
+            echo "Error: NPM version ($NPM_VERSION) does not match release version ($VERSION)"
+            exit 1
+          fi
+          
+      - name: Install dependencies
+        run: |
+          cd npm
+          npm ci
+          
+      - name: Publish to NPM
+        run: |
+          cd npm
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -188,6 +188,39 @@ func TestSearchHistory(t *testing.T) {
 	}
 }
 
+// TestPromptForHistorySelection doesn't test the interactive part but verifies the struct/function exists
+func TestPromptForHistorySelectionStructure(t *testing.T) {
+	// Create a temporary directory for test history
+	tempDir, err := os.MkdirTemp("", "ncurl-history-test")
+	if err != nil {
+		t.Fatalf("Failed to create temp directory: %v", err)
+	}
+	defer os.RemoveAll(tempDir)
+
+	// Create a test manager with a history file in the temp directory
+	manager := &Manager{
+		historyFile: filepath.Join(tempDir, "history.json"),
+		maxEntries:  10,
+	}
+
+	// Add test entry
+	err = manager.AddEntry("test command", true)
+	if err != nil {
+		t.Fatalf("Failed to add entry: %v", err)
+	}
+
+	// The test just verifies that the function exists and has the right signature
+	// We can't easily test the interactive prompt in unit tests
+	method := manager.PromptForHistorySelection
+	if method == nil {
+		t.Fatalf("PromptForHistorySelection method is nil")
+	}
+
+	// Verify that method has proper function signature
+	// If this compiles, the test passes for structure verification
+	var _ func() (string, error) = manager.PromptForHistorySelection
+}
+
 // Fix for test compilation
 func f(format string, args ...interface{}) string {
 	return fmt.Sprintf(format, args...)
