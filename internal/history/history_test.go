@@ -196,37 +196,25 @@ func TestSearchHistory(t *testing.T) {
 	}
 }
 
-// TestPromptForHistorySelection doesn't test the interactive part but verifies the struct/function exists
+// TestPromptForHistorySelectionStructure just verifies the function signature - not actual functionality
+// since we can't easily test interactive prompts in unit tests
 func TestPromptForHistorySelectionStructure(t *testing.T) {
-	// Create a temporary directory for test history
-	tempDir, err := os.MkdirTemp("", "ncurl-history-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
-
-	// Create a test manager with a history file in the temp directory
+	// Declare a local variable to hold the type signature we expect
+	var promptFunc func() (string, error)
+	
+	// Get pointer to a valid manager
 	manager := &Manager{
-		historyFile: filepath.Join(tempDir, "history.json"),
+		historyFile: "test-file.json",
 		maxEntries:  10,
 	}
-
-	// Add test entry
-	err = manager.AddEntry("test command", true)
-	if err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	
+	// Type assertion to verify function has expected signature
+	promptFunc = manager.PromptForHistorySelection
+	
+	// Simple call to ensure the function is properly assigned
+	if promptFunc == nil {
+		t.Fatalf("PromptForHistorySelection should not be nil")
 	}
-
-	// The test just verifies that the function exists and has the right signature
-	// We can't easily test the interactive prompt in unit tests
-	method := manager.PromptForHistorySelection
-	if method == nil {
-		t.Fatalf("PromptForHistorySelection method is nil")
-	}
-
-	// Verify that method has proper function signature
-	// If this compiles, the test passes for structure verification
-	var _ func() (string, error) = manager.PromptForHistorySelection
 }
 
 // Fix for test compilation

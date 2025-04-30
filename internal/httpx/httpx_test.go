@@ -140,6 +140,7 @@ func TestExecuteWithDefaults(t *testing.T) {
 		}
 
 		w.WriteHeader(http.StatusOK)
+		// For an empty response body, no need to call w.Write()
 	}))
 	defer server.Close()
 

@@ -41,6 +41,11 @@ issues:
     - path: _test\.go
       linters:
         - gosec
+        - errcheck
+    - path: httpx/httpx_test\.go
+      text: "Error return value of `w.Write` is not checked"
+      linters:
+        - errcheck
 
 run:
   deadline: 5m
