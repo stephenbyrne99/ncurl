@@ -1,0 +1,65 @@
+# GoReleaser configuration for ncurl
+project_name: ncurl
+
+builds:
+  - id: ncurl
+    main: ./cmd/ncurl
+    binary: ncurl
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+      - arm
+    goarm:
+      - 6
+      - 7
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
+      darwin: macOS
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - Merge pull request
+      - Merge branch
+
+brews:
+  - name: ncurl
+    tap:
+      owner: "{{.Env.HOMEBREW_TAP_OWNER}}"
+      name: "{{.Env.HOMEBREW_TAP_REPO}}"
+    url_template: "https://github.com/{{.Env.GITHUB_REPOSITORY}}/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    commit_author:
+      name: goreleaserbot
+      email: goreleaser@carlosbecker.com
+    description: "Natural language curl command with LLM support"
+    homepage: "https://github.com/{{.Env.GITHUB_REPOSITORY}}"
+    license: "MIT"
+    test: |
+      system "#{bin}/ncurl --version"
+    install: |
+      bin.install "ncurl"
+EOF < /dev/null

@@ -1,0 +1,90 @@
+
+# ==========================================================================
+# CI pipeline for github.com/stephenbyrne99/ncurl
+# Uses golangci‑lint, unit tests with coverage, multi‑arch build, and GoReleaser
+# ==========================================================================
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+    tags:    ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+
+      # 👉 golangci-lint (config in .golangci.yml)
+      - name: Lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+          args: --timeout 5m
+
+      # ---------- Tests & coverage ----------
+      - name: Run unit tests (race+coverage)
+        run: |
+          go test -race -covermode=atomic -coverprofile=coverage.out ./...
+
+      - name: Ensure coverage ≥60%
+        run: |
+          pct=$(go tool cover -func=coverage.out | awk '$1=="total:"{print substr($3,1,length($3)-1)}')
+          echo "total coverage: $pct%"
+          awk -v p=$pct 'BEGIN{exit (p<60)}'
+
+      - name: Upload coverage to Codecov
+        if: env.CODECOV_TOKEN != ''
+        uses: codecov/codecov-action@v4
+        with:
+          file: coverage.out
+
+  build:
+    needs: lint-test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os: [linux, windows, darwin]
+        arch: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+      - name: Cross‑compile ${{ matrix.os }}/${{ matrix.arch }}
+        env:
+          GOOS:   ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+        run: go build -o ncurl-${{ matrix.os }}-${{ matrix.arch }} ./cmd/ncurl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ncurl-${{ matrix.os }}-${{ matrix.arch }}
+          path: ncurl-${{ matrix.os }}-${{ matrix.arch }}
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: lint-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.22
+      - uses: goreleaser/goreleaser-action@v5
+        with:
+          version: latest
+          args: release --clean --timeout 60m
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
