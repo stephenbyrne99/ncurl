@@ -82,9 +82,9 @@ type Client struct {
 type ClientOption func(*Client)
 
 // WithAnthropicClient allows setting a custom Anthropic client
-func WithAnthropicClient(client anthropic.Client) ClientOption {
+func WithAnthropicClient(client *anthropic.Client) ClientOption {
 	return func(c *Client) {
-		c.anthropicClient = &client
+		c.anthropicClient = client
 	}
 }
 

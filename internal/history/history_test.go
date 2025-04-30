@@ -24,17 +24,17 @@ func TestHistoryOperations(t *testing.T) {
 	}
 
 	// Test adding entries
-	err = manager.AddEntry("test command 1", true)
-	if err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	addErr := manager.AddEntry("test command 1", true)
+	if addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
 
 	// Wait a moment to ensure different timestamps
 	time.Sleep(10 * time.Millisecond)
 
-	err = manager.AddEntry("test command 2", false)
-	if err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	addErr = manager.AddEntry("test command 2", false)
+	if addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
 
 	// Verify entries were saved
@@ -67,9 +67,9 @@ func TestHistoryOperations(t *testing.T) {
 
 	// Test max entries limit
 	for i := 0; i < 15; i++ {
-		err = manager.AddEntry(f("command %d", i), true)
-		if err != nil {
-			t.Fatalf("Failed to add entry %d: %v", i, err)
+		addErr = manager.AddEntry(f("command %d", i), true)
+		if addErr != nil {
+			t.Fatalf("Failed to add entry %d: %v", i, addErr)
 		}
 	}
 
@@ -99,9 +99,9 @@ func TestGetEntryByIndex(t *testing.T) {
 
 	// Add some test entries
 	for i := 1; i <= 5; i++ {
-		err = manager.AddEntry(f("command %d", i), true)
-		if err != nil {
-			t.Fatalf("Failed to add entry %d: %v", i, err)
+		addErr := manager.AddEntry(f("command %d", i), true)
+		if addErr != nil {
+			t.Fatalf("Failed to add entry %d: %v", i, addErr)
 		}
 	}
 
@@ -142,17 +142,17 @@ func TestSearchHistory(t *testing.T) {
 	}
 
 	// Add some test entries
-	if err := manager.AddEntry("GET github API", true); err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	if addErr := manager.AddEntry("GET github API", true); addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
-	if err := manager.AddEntry("POST user data", false); err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	if addErr := manager.AddEntry("POST user data", false); addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
-	if err := manager.AddEntry("GET weather data", true); err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	if addErr := manager.AddEntry("GET weather data", true); addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
-	if err := manager.AddEntry("DELETE user", true); err != nil {
-		t.Fatalf("Failed to add entry: %v", err)
+	if addErr := manager.AddEntry("DELETE user", true); addErr != nil {
+		t.Fatalf("Failed to add entry: %v", addErr)
 	}
 
 	// Test searching for "GET"
@@ -211,10 +211,13 @@ func TestPromptForHistorySelectionStructure(t *testing.T) {
 	// Type assertion to verify function has expected signature
 	promptFunc = manager.PromptForHistorySelection
 	
-	// Simple call to ensure the function is properly assigned
+	// Check that promptFunc is not nil and has expected signature
 	if promptFunc == nil {
 		t.Fatalf("PromptForHistorySelection should not be nil")
 	}
+	
+	// We don't actually call the function as it requires user input
+	// This is just a type check
 }
 
 // Fix for test compilation

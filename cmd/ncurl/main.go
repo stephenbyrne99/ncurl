@@ -94,7 +94,9 @@ func main() {
 
 	// Get the command to execute - either from history, interactive selection, or command line args
 	var prompt string
-	if *interactiveHistory && historyManager != nil {
+	
+	switch {
+	case *interactiveHistory && historyManager != nil:
 		// Get command from interactive history selection
 		cmd, err := historyManager.PromptForHistorySelection()
 		if err != nil {
@@ -104,7 +106,8 @@ func main() {
 		}
 		prompt = cmd
 		debugLogger.Printf("Selected command from history: %s", prompt)
-	} else if *historyRerun > 0 && historyManager != nil {
+		
+	case *historyRerun > 0 && historyManager != nil:
 		// Get command from history by index
 		entry, err := historyManager.GetEntryByIndex(*historyRerun)
 		if err != nil {
@@ -114,7 +117,8 @@ func main() {
 		}
 		prompt = entry.Command
 		debugLogger.Printf("Rerunning command from history: %s", prompt)
-	} else {
+		
+	default:
 		// Get command from command line args
 		args := flag.Args()
 		if len(args) < 1 {
@@ -178,15 +182,18 @@ func main() {
 	response, err := httpx.ExecuteWithContext(ctx, spec)
 	if err != nil {
 		var reqErr *httpx.RequestError
-		if errors.As(err, &reqErr) {
+		
+		switch {
+		case errors.As(err, &reqErr):
 			errorLogger.Printf("Request error: %v\n", reqErr)
-		} else if errors.Is(err, httpx.ErrInvalidRequest) {
+		case errors.Is(err, httpx.ErrInvalidRequest):
 			errorLogger.Printf("Invalid request: %v\n", err)
-		} else if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		case errors.Is(ctx.Err(), context.DeadlineExceeded):
 			errorLogger.Printf("Request timed out after %d seconds\n", *timeout)
-		} else {
+		default:
 			errorLogger.Printf("Request failed: %v\n", err)
 		}
+		
 		exitCode = 1
 		return
 	}

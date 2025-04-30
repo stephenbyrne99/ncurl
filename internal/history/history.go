@@ -33,7 +33,7 @@ func NewManager(maxEntries int) (*Manager, error) {
 
 	// Create .ncurl directory if it doesn't exist
 	configDir := filepath.Join(home, ".ncurl")
-	if err := os.MkdirAll(configDir, 0750); err != nil {
+	if err := os.MkdirAll(configDir, 0o750); err != nil {
 		return nil, fmt.Errorf("failed to create config directory: %w", err)
 	}
 
@@ -81,7 +81,14 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open history file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			// If we already have an error, don't override it
+			if err == nil {
+				err = fmt.Errorf("failed to close history file: %w", closeErr)
+			}
+		}
+	}()
 
 	var entries []HistoryEntry
 	if err := json.NewDecoder(file).Decode(&entries); err != nil {
@@ -97,7 +104,14 @@ func (m *Manager) saveEntries(entries []HistoryEntry) error {
 	if err != nil {
 		return fmt.Errorf("failed to create history file: %w", err)
 	}
-	defer file.Close()
+	defer func() {
+		if closeErr := file.Close(); closeErr != nil {
+			// If we already have an error, don't override it
+			if err == nil {
+				err = fmt.Errorf("failed to close history file: %w", closeErr)
+			}
+		}
+	}()
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")

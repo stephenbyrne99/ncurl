@@ -114,7 +114,19 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 			Method:  spec.Method,
 		}
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if closeErr := resp.Body.Close(); closeErr != nil {
+			// If we already have an error, don't override it
+			if err == nil {
+				err = &RequestError{
+					Err:     closeErr,
+					Message: "failed to close response body",
+					URL:     spec.URL,
+					Method:  spec.Method,
+				}
+			}
+		}
+	}()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
