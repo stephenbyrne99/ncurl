@@ -63,9 +63,9 @@ chmod 644 ~/.ncurl/history.json
 
 If you're still experiencing issues:
 
-1. Run with debug mode to get more information:
+1. Run with verbose mode to get more information:
    ```bash
-   ncurl -debug "your request"
+   ncurl -v "your request"
    ```
 
 2. Check the GitHub repository for known issues or to file a bug report:

@@ -9,9 +9,27 @@
 
 ## 💾 Installation
 
+### Option 1: Using Go Install
+
 ```bash
 go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
 ```
+
+### Option 2: Local Installation
+
+If you want to install locally without using Go's package manager:
+
+```bash
+# Clone the repository
+git clone https://github.com/stephenbyrne99/ncurl.git
+cd ncurl
+
+# Run the installation script
+./scripts/install.sh
+```
+
+The script will build from source and install to `~/.local/bin` (or `~/bin` if `.local/bin` doesn't exist).
+If needed, it will also provide instructions to add the installation directory to your PATH.
 
 > **Prerequisite:** export `ANTHROPIC_API_KEY` in your shell before running `ncurl`.
 

@@ -12,7 +12,7 @@ This will:
 1. Parse your natural language request
 2. Generate a proper HTTP request (in this case, to JSONPlaceholder's posts endpoint)
 3. Execute the request
-4. Display the response
+4. Display the response (with proper handling for both text and binary content)
 
 ## Command Options
 
@@ -23,7 +23,6 @@ This will:
 | `-j` | Output response body as JSON only |
 | `-v` | Verbose output (include request details) |
 | `-version` | Show version information |
-| `-debug` | Enable debug logging |
 
 ## Working with Command History
 
@@ -82,3 +81,10 @@ Get weather data:
 ```bash
 ncurl "get the current weather for New York City from the OpenWeatherMap API"
 ```
+
+Download binary data:
+```bash
+ncurl -j "get image from httpbin.org/image/png" > image.png
+```
+
+This saves the binary data directly to a file, preserving the binary format.

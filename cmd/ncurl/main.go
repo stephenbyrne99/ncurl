@@ -17,6 +17,14 @@ import (
 	"github.com/stephenbyrne99/ncurl/internal/llm"
 )
 
+// min returns the smaller of x or y.
+func min(x, y int) int {
+	if x < y {
+		return x
+	}
+	return y
+}
+
 // Version information set by goreleaser
 var (
 	version = "dev"
@@ -27,7 +35,6 @@ var (
 // Logger instances for different levels
 var (
 	errorLogger = log.New(os.Stderr, "ERROR: ", log.LstdFlags)
-	debugLogger = log.New(os.Stdout, "DEBUG: ", log.LstdFlags)
 )
 
 var (
@@ -38,7 +45,6 @@ var (
 	verbose            = flag.Bool("v", false, "Verbose output (include request details)")
 	showVersion        = flag.Bool("version", false, "Show version information")
 	showHelp           = flag.Bool("help", false, "Show detailed help with usage examples")
-	debug              = flag.Bool("debug", false, "Enable debug logging")
 	showHistory        = flag.Bool("history", false, "Show command history")
 	historyCount       = flag.Int("history-count", 50, "Maximum number of history entries to keep")
 	historyRerun       = flag.Int("rerun", 0, "Rerun a command from history by index")
@@ -65,7 +71,6 @@ OPTIONS
   -v                 Verbose output (include request details)
   -version           Show version information
   -help              Show this detailed help message
-  -debug             Enable debug logging
 
 HISTORY OPTIONS
   -history           Show command history
@@ -100,7 +105,7 @@ For more information on a specific command, run 'ncurl <command> -help'
 }
 
 func main() {
-	// Set up exit code handling
+	// Set up exit code handling more cleanly
 	var exitCode int
 	defer func() {
 		os.Exit(exitCode)
@@ -113,11 +118,6 @@ func main() {
 	}
 
 	flag.Parse()
-
-	// Enable/disable debug logging based on flag
-	if !*debug {
-		debugLogger.SetOutput(nil)
-	}
 
 	// Initialize history manager
 	historyManager, err := history.NewManager(*historyCount)
@@ -171,7 +171,6 @@ func main() {
 			return
 		}
 		prompt = cmd
-		debugLogger.Printf("Selected command from history: %s", prompt)
 
 	case *historyRerun > 0 && historyManager != nil:
 		// Get command from history by index
@@ -182,7 +181,6 @@ func main() {
 			return
 		}
 		prompt = entry.Command
-		debugLogger.Printf("Rerunning command from history: %s", prompt)
 
 	default:
 		// Get command from command line args
@@ -204,17 +202,18 @@ func main() {
 	// Ensure API key is set
 	if os.Getenv("ANTHROPIC_API_KEY") == "" {
 		errorLogger.Println("ANTHROPIC_API_KEY environment variable is required")
+		fmt.Println("Error: ANTHROPIC_API_KEY environment variable is required")
+		fmt.Println("Please set it with: export ANTHROPIC_API_KEY=\"your-key-here\"")
+		fmt.Println("Or for a single command: ANTHROPIC_API_KEY=\"your-key-here\" ncurl \"your query\"")
 		exitCode = 1
 		return
 	}
-
-	debugLogger.Printf("Processing natural language request: %s", prompt)
 
 	// Record command in history when exiting
 	defer func() {
 		if historyManager != nil {
 			if err := historyManager.AddEntry(prompt, exitCode == 0); err != nil {
-				debugLogger.Printf("Failed to save command to history: %v", err)
+				// Error occurred but we don't want to log it
 			}
 		}
 	}()
@@ -232,8 +231,6 @@ func main() {
 		return
 	}
 
-	debugLogger.Printf("Generated request spec: %+v", spec)
-
 	if *verbose {
 		fmt.Printf("Request: %s %s\n", spec.Method, spec.URL)
 		if len(spec.Headers) > 0 {
@@ -250,6 +247,7 @@ func main() {
 
 	// Execute the request with context for cancellation/timeout
 	response, err := httpx.ExecuteWithContext(ctx, spec)
+
 	if err != nil {
 		var reqErr *httpx.RequestError
 
@@ -268,22 +266,49 @@ func main() {
 		return
 	}
 
-	debugLogger.Printf("Response received: Status=%s, ContentType=%s, BodyLength=%d",
-		response.Status, response.Header.Get("Content-Type"), len(response.Body))
+	// Use a different approach for binary vs text content
+	contentType := response.Header.Get("Content-Type")
+	isBinary := !(strings.Contains(contentType, "text/") ||
+		strings.Contains(contentType, "application/json") ||
+		strings.Contains(contentType, "application/xml") ||
+		strings.Contains(contentType, "application/javascript"))
 
-	// Output the response
 	if *jsonOnly {
-		fmt.Println(string(response.Body))
+		// For JSON-only mode, write the raw body without conversion for binary data
+		if isBinary {
+			os.Stdout.Write(response.Body)
+		} else {
+			// For text-based content, use print which does string conversion
+			fmt.Print(string(response.Body))
+
+			// Add a newline if not already present
+			if len(response.Body) > 0 && response.Body[len(response.Body)-1] != '\n' {
+				fmt.Println()
+			}
+		}
 	} else {
+		// For standard mode, print metadata and headers
 		fmt.Printf("Status: %s\n", response.Status)
 		fmt.Printf("Content-Type: %s\n", response.Header.Get("Content-Type"))
+
 		if *verbose {
 			fmt.Println("Headers:")
 			for k, v := range response.Header {
 				fmt.Printf("  %s: %s\n", k, v)
 			}
 		}
+
 		fmt.Println()
-		fmt.Println(string(response.Body))
+
+		// Print the response body
+		if isBinary {
+			// For binary data, write raw bytes
+			os.Stdout.Write(response.Body)
+			fmt.Println() // Add a newline after binary data
+		} else {
+			// For text data, convert to string
+			fmt.Println(string(response.Body))
+		}
 	}
+
 }
