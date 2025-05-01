@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// HistoryEntry represents a single command in the history
-type HistoryEntry struct {
+// Entry represents a single command in the history
+type Entry struct {
 	Timestamp time.Time `json:"timestamp"`
 	Command   string    `json:"command"`
 	Success   bool      `json:"success"`
@@ -48,18 +48,18 @@ func (m *Manager) AddEntry(command string, success bool) error {
 	entries, err := m.GetEntries()
 	if err != nil {
 		// If we can't read the history, just start with an empty slice
-		entries = []HistoryEntry{}
+		entries = []Entry{}
 	}
 
 	// Add new entry
-	entry := HistoryEntry{
+	entry := Entry{
 		Timestamp: time.Now(),
 		Command:   command,
 		Success:   success,
 	}
 
 	// Prepend the new entry (most recent first)
-	entries = append([]HistoryEntry{entry}, entries...)
+	entries = append([]Entry{entry}, entries...)
 
 	// Trim to max entries
 	if len(entries) > m.maxEntries {
@@ -71,10 +71,10 @@ func (m *Manager) AddEntry(command string, success bool) error {
 }
 
 // GetEntries retrieves all history entries
-func (m *Manager) GetEntries() ([]HistoryEntry, error) {
+func (m *Manager) GetEntries() ([]Entry, error) {
 	// Check if history file exists
 	if _, err := os.Stat(m.historyFile); os.IsNotExist(err) {
-		return []HistoryEntry{}, nil
+		return []Entry{}, nil
 	}
 
 	file, openErr := os.Open(m.historyFile)
@@ -89,7 +89,7 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 		}
 	}()
 
-	var entries []HistoryEntry
+	var entries []Entry
 	decodeErr := json.NewDecoder(file).Decode(&entries)
 	if decodeErr != nil {
 		return nil, fmt.Errorf("failed to decode history data: %w", decodeErr)
@@ -103,7 +103,7 @@ func (m *Manager) GetEntries() ([]HistoryEntry, error) {
 }
 
 // saveEntries writes entries to the history file
-func (m *Manager) saveEntries(entries []HistoryEntry) error {
+func (m *Manager) saveEntries(entries []Entry) error {
 	file, createErr := os.Create(m.historyFile)
 	if createErr != nil {
 		return fmt.Errorf("failed to create history file: %w", createErr)
@@ -159,23 +159,23 @@ func (m *Manager) PrintHistory() error {
 var ErrEntryNotFound = errors.New("history entry not found")
 
 // GetEntryByIndex retrieves a specific history entry by its index (1-based)
-func (m *Manager) GetEntryByIndex(index int) (HistoryEntry, error) {
+func (m *Manager) GetEntryByIndex(index int) (Entry, error) {
 	entries, err := m.GetEntries()
 	if err != nil {
-		return HistoryEntry{}, err
+		return Entry{}, err
 	}
 
 	// Convert to 0-based index for slice access
 	idx := index - 1
 	if idx < 0 || idx >= len(entries) {
-		return HistoryEntry{}, fmt.Errorf("%w: index %d is out of range", ErrEntryNotFound, index)
+		return Entry{}, fmt.Errorf("%w: index %d is out of range", ErrEntryNotFound, index)
 	}
 
 	return entries[idx], nil
 }
 
 // SearchHistory returns entries that contain the given search term
-func (m *Manager) SearchHistory(term string) ([]HistoryEntry, error) {
+func (m *Manager) SearchHistory(term string) ([]Entry, error) {
 	entries, err := m.GetEntries()
 	if err != nil {
 		return nil, err
@@ -185,7 +185,7 @@ func (m *Manager) SearchHistory(term string) ([]HistoryEntry, error) {
 		return entries, nil
 	}
 
-	var results []HistoryEntry
+	var results []Entry
 	for _, entry := range entries {
 		if strings.Contains(strings.ToLower(entry.Command), strings.ToLower(term)) {
 			results = append(results, entry)

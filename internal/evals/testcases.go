@@ -266,7 +266,7 @@ func DefaultTestCases() []EvalCase {
 	}
 }
 
-// Load test cases from a JSON file
+// LoadTestCasesFromFile loads test cases from a JSON file
 func LoadTestCasesFromFile(filePath string) ([]EvalCase, error) {
 	f, err := os.Open(filepath.Clean(filePath))
 	if err != nil {

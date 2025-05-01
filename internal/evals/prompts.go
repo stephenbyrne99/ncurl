@@ -195,13 +195,13 @@ func EvaluateWithAnthropicPrompt(ctx context.Context, model string, input Reques
 
 	// Parse the JSON response
 	type EvaluationResponse struct {
-		MethodScore   float64 `json:"method_score"`
-		URLScore      float64 `json:"url_score"`
-		HeadersScore  float64 `json:"headers_score"`
-		BodyScore     float64 `json:"body_score"`
-		OverallScore  float64 `json:"overall_score"`
-		Reasoning     string  `json:"reasoning"`
-		Suggestions   string  `json:"suggestions"`
+		MethodScore  float64 `json:"method_score"`
+		URLScore     float64 `json:"url_score"`
+		HeadersScore float64 `json:"headers_score"`
+		BodyScore    float64 `json:"body_score"`
+		OverallScore float64 `json:"overall_score"`
+		Reasoning    string  `json:"reasoning"`
+		Suggestions  string  `json:"suggestions"`
 	}
 
 	// Try to extract JSON from the response

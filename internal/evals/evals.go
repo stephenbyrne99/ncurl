@@ -188,53 +188,54 @@ func (e *Evaluator) evaluateSpec(spec *httpx.RequestSpec, evalCase *EvalCase) (f
 	// Check URL
 	if evalCase.ExpectedURL != "" {
 		// Check if the URL contains the expected substring or if it's semantically equivalent
-		urlMatch := false
+		urlMatched := false
 
 		switch {
 		case strings.Contains(spec.URL, evalCase.ExpectedURL):
 			// Direct match found
-			urlMatch = true
+			urlMatched = true
 
 		case strings.Contains(strings.ToLower(spec.URL), strings.ToLower(evalCase.ExpectedURL)):
 			// Case-insensitive match found
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "bitcoin" &&
 			(strings.Contains(spec.URL, "coindesk") || strings.Contains(spec.URL, "crypto") ||
 				strings.Contains(spec.URL, "coin") || strings.Contains(spec.URL, "btc")):
 			// Special case for Bitcoin-related URLs
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "key=abc123xyz" &&
 			(strings.Contains(spec.URL, "abc123xyz") || strings.Contains(spec.URL, "key=") ||
 				strings.Contains(spec.URL, "apikey=") || strings.Contains(spec.URL, "api_key=") ||
 				strings.Contains(spec.URL, "appid=")):
 			// Special case for API keys - might use different parameter names
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "profile" &&
 			(strings.Contains(spec.URL, "profile") || strings.Contains(spec.URL, "user") ||
 				strings.Contains(spec.URL, "account")):
 			// Special case for profile-related URLs
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "v2" &&
 			(strings.Contains(spec.URL, "v2") || strings.Contains(spec.URL, "/v2") ||
 				strings.Contains(spec.URL, "v2/")):
 			// Special case for API version
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "localhost:3000/users" && spec.URL == "http://localhost:3000/api/users":
 			// Special case for localhost API routes
-			urlMatch = true
+			urlMatched = true
 
 		case evalCase.ExpectedURL == "api.example.com/users" &&
 			(strings.Contains(spec.URL, "api.github.com/users") ||
 				strings.Contains(spec.URL, "api.example.com/users")):
 			// Handle example.com being replaced with real APIs
-			urlMatch = true
+			urlMatched = true
+		}
 
-		default:
+		if !urlMatched {
 			reasons = append(reasons, fmt.Sprintf("URL mismatch: expected URL to contain %s, got %s",
 				evalCase.ExpectedURL, spec.URL))
 			deductions += 0.3
