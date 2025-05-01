@@ -136,6 +136,38 @@ requests into a JSON object with the following shape:
 }
 Return **only** valid JSON with those exact keys (lower‑case) and no
 explanation or additional text.
+
+Guidelines:
+1. Never use example.com for the url, always point to a real API
+2. For cryptocurrency requests, use appropriate public APIs (e.g., coindesk, binance, etc.)
+3. For weather data, use appropriate weather APIs (e.g., openweathermap, weatherapi, etc.)
+4. When authentication credentials are provided, include them as appropriate headers or URL parameters
+5. When specific IDs or query parameters are mentioned, include them in the URL or query string
+6. When the user provides explicit JSON in the prompt, use it exactly as provided
+7. Convert ambiguous natural language into the most likely intended HTTP request
+
+Authentication and Headers:
+8. For JWT tokens, use the entire token in the Authorization header (Bearer [token])
+9. For API keys, follow the exact format mentioned in the input (key=xyz, appid=xyz, etc.)
+10. For Basic auth, include basic auth in the Authorization header (Basic [base64])
+11. For If-Modified-Since dates, format correctly as HTTP date (e.g., Sun, 01 Jan 2023 00:00:00 GMT)
+
+URL and Endpoint Guidelines:
+12. When a domain is explicitly provided (like api.example.com), always use it exactly as given
+13. When API versioning is mentioned (like "v2"), include it in the path (/v2/endpoint)
+14. For profile requests, use appropriate endpoint (/profile or /user/profile)
+15. For uploads, use appropriate content type (multipart/form-data) and boundary
+
+Local development guidelines:
+16. For localhost requests without a port, use port 3000 by default (localhost:3000)
+17. Always use the specific port if mentioned (e.g., localhost:8080 or localhost:5000)
+18. For Next.js API routes, use localhost:3000/api/[route] unless another port is specified
+19. For regular API endpoints on localhost, do NOT add /api unless specifically mentioned
+20. For GraphQL queries to localhost, use POST to localhost:[port]/graphql with appropriate Content-Type
+21. Include authentication tokens when mentioned for localhost requests
+22. For other local frameworks (Express, Flask, Rails, etc.), use appropriate port conventions
+
+Your goal is to accurately translate what the user wants into a proper HTTP request, including correctly handling local development scenarios.
 `
 
 	msg, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{

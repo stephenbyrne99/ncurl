@@ -56,6 +56,7 @@ DESCRIPTION
 
 USAGE
   ncurl [options] "<natural language request>"
+  ncurl help        Show this help message
 
 OPTIONS
   -t <seconds>       Set timeout in seconds (default: 30)
@@ -92,6 +93,8 @@ EXAMPLES
 
 ENVIRONMENT
   ANTHROPIC_API_KEY  Required API key for the Anthropic Claude API, add this to your .zshrc or .bashrc
+
+For more information on a specific command, run 'ncurl <command> -help'
 `
 	fmt.Println(helpText)
 }
@@ -102,6 +105,12 @@ func main() {
 	defer func() {
 		os.Exit(exitCode)
 	}()
+
+	// Check for help subcommand
+	if len(os.Args) > 1 && os.Args[1] == "help" {
+		printHelp()
+		return
+	}
 
 	flag.Parse()
 
