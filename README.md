@@ -9,31 +9,99 @@
 
 ## 💾 Installation
 
+### Prerequisites
+
+- **Go**: Version 1.22 or higher is required. If you don't have Go installed, follow these instructions:
+
+#### Installing Go
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install go
+
+# Or download the installer from https://go.dev/dl/
+```
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install golang-go
+
+# Fedora
+sudo dnf install golang
+
+# Arch Linux
+sudo pacman -S go
+```
+
+**Windows:**
+```bash
+# Using Chocolatey
+choco install golang
+
+# Or download the installer from https://go.dev/dl/
+```
+
+Verify your installation:
+```bash
+go version
+```
+
 ### Option 1: Using Go Install
 
 ```bash
 go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
 ```
 
-### Option 2: Local Installation
+### Option 2: Using npm
 
-If you want to install locally without using Go's package manager:
+```bash
+npm install -g ncurl
+```
+
+This will download the pre-built binary for your platform.
+
+### Option 3: Building from Source
 
 ```bash
 # Clone the repository
 git clone https://github.com/stephenbyrne99/ncurl.git
 cd ncurl
 
-# Run the installation script
+# Build using the installation script
 ./scripts/install.sh
 ```
 
 The script will build from source and install to `~/.local/bin` (or `~/bin` if `.local/bin` doesn't exist).
 If needed, it will also provide instructions to add the installation directory to your PATH.
 
-> **Prerequisite:** export `ANTHROPIC_API_KEY` in your shell before running `ncurl`.
+> **Prerequisite:** You need an Anthropic API key. Export it in your shell before running `ncurl`.
 
-I set this in my .zshrc so its always set :)
+### Setting Up Your API Key
+
+To avoid having to export your API key each time, add it to your shell's configuration file:
+
+**For Bash users (.bashrc):**
+```bash
+echo 'export ANTHROPIC_API_KEY="your-key-here"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+**For Zsh users (.zshrc):**
+```bash
+echo 'export ANTHROPIC_API_KEY="your-key-here"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**For Fish users (config.fish):**
+```bash
+echo 'set -x ANTHROPIC_API_KEY "your-key-here"' >> ~/.config/fish/config.fish
+source ~/.config/fish/config.fish
+```
+
+Replace `"your-key-here"` with your actual Anthropic API key from https://console.anthropic.com/.
 
 ---
 
@@ -44,10 +112,10 @@ I set this in my .zshrc so its always set :)
 ncurl "download https://httpbin.org/get"
 
 # POST with JSON and a shorter timeout
-ncurl -t 10 "POST to httpbin with a name field beind hello"
+ncurl -t 10 "POST to httpbin with a name field being hello"
 
 # Pipe prettified JSON through jq
-ncurl "get  github stephenbyrne99 ncurl repo"  | jq '.body | fromjson | .stargazers_count'
+ncurl "get github stephenbyrne99 ncurl repo" | jq '.body | fromjson | .stargazers_count'
 ```
 
 ---
