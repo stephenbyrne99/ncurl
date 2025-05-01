@@ -29,13 +29,13 @@ type ValidationResult struct {
 
 // InputValidationResult represents the result of input validation
 type InputValidationResult struct {
-	IsValid        bool    `json:"is_valid"`
-	Clarity        float64 `json:"clarity_score"`   // 0-1 score for clarity
-	Completeness   float64 `json:"completeness"`    // 0-1 score for completeness
-	Specificity    float64 `json:"specificity"`     // 0-1 score for specificity
-	ErrorType      string  `json:"error_type,omitempty"`
-	ErrorSeverity  string  `json:"error_severity,omitempty"`
-	Analysis       string  `json:"analysis"`
+	IsValid         bool    `json:"is_valid"`
+	Clarity         float64 `json:"clarity_score"` // 0-1 score for clarity
+	Completeness    float64 `json:"completeness"`  // 0-1 score for completeness
+	Specificity     float64 `json:"specificity"`   // 0-1 score for specificity
+	ErrorType       string  `json:"error_type,omitempty"`
+	ErrorSeverity   string  `json:"error_severity,omitempty"`
+	Analysis        string  `json:"analysis"`
 	Recommendations string  `json:"recommendations,omitempty"`
 }
 
@@ -203,7 +203,7 @@ Provide your evaluation in JSON format with these fields:
 }
 
 // ValidateURL validates if a URL is well-formed and secure
-func ValidateURL(urlStr string) (bool, string) {
+func ValidateURL(urlStr string) (isValid bool, message string) {
 	if urlStr == "" {
 		return false, "URL is empty"
 	}
@@ -225,8 +225,8 @@ func ValidateURL(urlStr string) (bool, string) {
 
 	// Check for localhost or private IPs
 	host := parsedURL.Hostname()
-	if host == "localhost" || host == "127.0.0.1" || strings.HasPrefix(host, "192.168.") || 
-	   strings.HasPrefix(host, "10.") || strings.HasPrefix(host, "172.16.") {
+	if host == "localhost" || host == "127.0.0.1" || strings.HasPrefix(host, "192.168.") ||
+		strings.HasPrefix(host, "10.") || strings.HasPrefix(host, "172.16.") {
 		return true, "Warning: Using a local/private address"
 	}
 
@@ -234,7 +234,7 @@ func ValidateURL(urlStr string) (bool, string) {
 }
 
 // ValidateHeaders validates HTTP headers for common issues
-func ValidateHeaders(headers map[string]string) (bool, string) {
+func ValidateHeaders(headers map[string]string) (isValid bool, message string) {
 	if len(headers) == 0 {
 		return true, ""
 	}
@@ -244,7 +244,7 @@ func ValidateHeaders(headers map[string]string) (bool, string) {
 	for k, v := range headers {
 		// Check for sensitive information in headers
 		sensitiveKeys := []string{"authorization", "api-key", "apikey", "secret", "password", "token"}
-		
+
 		for _, sensitive := range sensitiveKeys {
 			if strings.Contains(strings.ToLower(k), sensitive) {
 				// Don't log the actual value for security reasons
@@ -255,13 +255,13 @@ func ValidateHeaders(headers map[string]string) (bool, string) {
 		}
 
 		// Check for content-type header when necessary
-		if strings.ToLower(k) == "content-type" {
+		if strings.EqualFold(k, "content-type") {
 			contentType := strings.ToLower(v)
-			if !strings.Contains(contentType, "application/json") && 
-			   !strings.Contains(contentType, "application/xml") && 
-			   !strings.Contains(contentType, "text/plain") && 
-			   !strings.Contains(contentType, "multipart/form-data") && 
-			   !strings.Contains(contentType, "application/x-www-form-urlencoded") {
+			if !strings.Contains(contentType, "application/json") &&
+				!strings.Contains(contentType, "application/xml") &&
+				!strings.Contains(contentType, "text/plain") &&
+				!strings.Contains(contentType, "multipart/form-data") &&
+				!strings.Contains(contentType, "application/x-www-form-urlencoded") {
 				issues = append(issues, fmt.Sprintf("Unusual Content-Type: %s", v))
 			}
 		}
@@ -275,7 +275,7 @@ func ValidateHeaders(headers map[string]string) (bool, string) {
 }
 
 // ValidateBody validates request body content
-func ValidateBody(body, contentType string) (bool, string) {
+func ValidateBody(body, contentType string) (isValid bool, message string) {
 	if body == "" {
 		return true, ""
 	}
@@ -332,7 +332,7 @@ func ValidateRequestSpec(spec *httpx.RequestSpec) (bool, map[string]string) {
 	// Get content type for body validation
 	contentType := ""
 	for k, v := range spec.Headers {
-		if strings.ToLower(k) == "content-type" {
+		if strings.EqualFold(k, "content-type") {
 			contentType = v
 			break
 		}
