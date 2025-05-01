@@ -69,7 +69,7 @@ print_success "Successfully installed ncurl to $INSTALL_DIR/ncurl"
 if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     print_warning "The directory $INSTALL_DIR is not in your PATH."
     
-    # Detect shell and recommend PATH update command
+    # Detect shell and update PATH automatically
     SHELL_NAME=$(basename "$SHELL")
     RC_FILE=""
     PATH_EXPORT="export PATH=\"\$PATH:$INSTALL_DIR\""
@@ -81,27 +81,60 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     fi
     
     if [[ -n "$RC_FILE" ]]; then
-        print_warning "To add it to your PATH, run:"
-        echo "echo '$PATH_EXPORT' >> $RC_FILE"
+        print_warning "Adding $INSTALL_DIR to your PATH in $RC_FILE..."
+        echo "" >> "$RC_FILE"
+        echo "# Added by ncurl installer" >> "$RC_FILE"
+        echo "$PATH_EXPORT" >> "$RC_FILE"
+        print_success "Successfully added to PATH in $RC_FILE"
+        print_warning "To use ncurl in this terminal session, run:"
         echo "source $RC_FILE"
     else
-        print_warning "To add it to your PATH, add the following line to your shell configuration file:"
+        print_warning "Could not determine your shell configuration file."
+        print_warning "To add it to your PATH manually, add the following line to your shell configuration file:"
         echo "$PATH_EXPORT"
     fi
-    
-    print_warning "Or run ncurl directly: $INSTALL_DIR/ncurl"
 else
     print_success "The directory is in your PATH. You can run ncurl from anywhere."
 fi
 
-print_warning "Note: Remember to set ANTHROPIC_API_KEY in your environment before using ncurl."
-print_warning "You can add this to your shell configuration file with:"
-if [[ "$SHELL_NAME" == "bash" ]]; then
-    echo "echo 'export ANTHROPIC_API_KEY=\"your-api-key\"' >> $HOME/.bashrc"
-elif [[ "$SHELL_NAME" == "zsh" ]]; then
-    echo "echo 'export ANTHROPIC_API_KEY=\"your-api-key\"' >> $HOME/.zshrc"
+# Interactive API key setup
+print_warning "ncurl requires an Anthropic API key to function properly."
+read -p "Would you like to set up your Anthropic API key now? (y/n): " SETUP_API_KEY
+
+if [[ "$SETUP_API_KEY" =~ ^[Yy]$ ]]; then
+    read -p "Enter your Anthropic API key: " API_KEY
+    
+    if [[ -n "$API_KEY" ]]; then
+        # Detect shell and add API key to config
+        if [[ -n "$RC_FILE" ]]; then
+            echo "" >> "$RC_FILE"
+            echo "# Anthropic API key for ncurl" >> "$RC_FILE"
+            echo "export ANTHROPIC_API_KEY=\"$API_KEY\"" >> "$RC_FILE"
+            print_success "Successfully added API key to $RC_FILE"
+            print_warning "To use ncurl in this terminal session, run:"
+            echo "source $RC_FILE"
+            
+            # Also set it for the current session
+            export ANTHROPIC_API_KEY="$API_KEY"
+            print_success "API key has been set for the current terminal session."
+        else
+            print_warning "Could not determine your shell configuration file."
+            print_warning "To set your API key manually, add the following line to your shell configuration file:"
+            echo "export ANTHROPIC_API_KEY=\"$API_KEY\""
+            
+            # Still set it for the current session
+            export ANTHROPIC_API_KEY="$API_KEY"
+            print_success "API key has been set for the current terminal session only."
+        fi
+    else
+        print_warning "No API key entered. You'll need to set it up later."
+        print_warning "You can get an API key from https://console.anthropic.com/"
+    fi
 else
-    echo "export ANTHROPIC_API_KEY=\"your-api-key\""
+    print_warning "You'll need to set up your API key later."
+    print_warning "You can set it with: export ANTHROPIC_API_KEY=\"your-api-key\""
+    print_warning "Or add it to your shell config file for persistent use."
+    print_warning "You can get an API key from https://console.anthropic.com/"
 fi
 
 print_success "Installation complete! Run 'ncurl help' to get started."
