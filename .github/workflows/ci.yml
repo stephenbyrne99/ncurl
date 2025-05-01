@@ -12,21 +12,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
-          cache: true
-
-      - name: Verify dependencies
-        run: go mod verify
-
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v3
+          go-version: stable
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
         with:
-          version: latest
+          version: v2.0
 
       - name: Run golangci-lint
         run: golangci-lint run --timeout=5m
@@ -36,7 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v4
@@ -58,7 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0 # Full git history
           clean: true # Force clean checkout
@@ -79,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       
