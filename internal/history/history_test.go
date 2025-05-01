@@ -1,27 +1,21 @@
-package history
+package history_test
 
 import (
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/stephenbyrne99/ncurl/internal/history"
 )
 
 func TestHistoryOperations(t *testing.T) {
 	// Create a temporary directory for test history
-	tempDir, err := os.MkdirTemp("", "ncurl-history-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir() // Uses testing's built-in temporary directory that's automatically cleaned up
 
 	// Create a test manager with a history file in the temp directory
-	manager := &Manager{
-		historyFile: filepath.Join(tempDir, "history.json"),
-		maxEntries:  10,
-	}
+	manager := history.NewTestManager(filepath.Join(tempDir, "history.json"), 10)
 
 	// Test adding entries
 	addErr := manager.AddEntry("test command 1", true)
@@ -66,7 +60,7 @@ func TestHistoryOperations(t *testing.T) {
 	}
 
 	// Test max entries limit
-	for i := 0; i < 15; i++ {
+	for i := range 15 {
 		addErr = manager.AddEntry(f("command %d", i), true)
 		if addErr != nil {
 			t.Fatalf("Failed to add entry %d: %v", i, addErr)
@@ -85,17 +79,10 @@ func TestHistoryOperations(t *testing.T) {
 
 func TestGetEntryByIndex(t *testing.T) {
 	// Create a temporary directory for test history
-	tempDir, err := os.MkdirTemp("", "ncurl-history-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir() // Uses testing's built-in temporary directory that's automatically cleaned up
 
 	// Create a test manager with a history file in the temp directory
-	manager := &Manager{
-		historyFile: filepath.Join(tempDir, "history.json"),
-		maxEntries:  10,
-	}
+	manager := history.NewTestManager(filepath.Join(tempDir, "history.json"), 10)
 
 	// Add some test entries
 	for i := 1; i <= 5; i++ {
@@ -122,24 +109,17 @@ func TestGetEntryByIndex(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected error when retrieving out-of-range index")
 	}
-	if !errors.Is(err, ErrEntryNotFound) {
+	if !errors.Is(err, history.ErrEntryNotFound) {
 		t.Errorf("Expected ErrEntryNotFound, got %v", err)
 	}
 }
 
 func TestSearchHistory(t *testing.T) {
 	// Create a temporary directory for test history
-	tempDir, err := os.MkdirTemp("", "ncurl-history-test")
-	if err != nil {
-		t.Fatalf("Failed to create temp directory: %v", err)
-	}
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir() // Uses testing's built-in temporary directory that's automatically cleaned up
 
 	// Create a test manager with a history file in the temp directory
-	manager := &Manager{
-		historyFile: filepath.Join(tempDir, "history.json"),
-		maxEntries:  10,
-	}
+	manager := history.NewTestManager(filepath.Join(tempDir, "history.json"), 10)
 
 	// Add some test entries
 	if addErr := manager.AddEntry("GET github API", true); addErr != nil {
@@ -200,10 +180,7 @@ func TestSearchHistory(t *testing.T) {
 // since we can't easily test interactive prompts in unit tests
 func TestPromptForHistorySelectionStructure(t *testing.T) {
 	// Get pointer to a valid manager
-	manager := &Manager{
-		historyFile: "test-file.json",
-		maxEntries:  10,
-	}
+	manager := history.NewTestManager("test-file.json", 10)
 
 	// We don't actually call the function as it requires user input,
 	// but we verify the function exists with correct signature

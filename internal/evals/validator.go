@@ -3,6 +3,7 @@ package evals
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -52,7 +53,11 @@ func NewResponseValidator(model string) *ResponseValidator {
 }
 
 // ValidateResponse validates a HTTP response against the expected response
-func (v *ResponseValidator) ValidateResponse(ctx context.Context, input RequestEvalInput, response []byte) (*ValidationResult, error) {
+func (v *ResponseValidator) ValidateResponse(
+	ctx context.Context,
+	input RequestEvalInput,
+	response []byte,
+) (*ValidationResult, error) {
 	// Prepare the input for evaluation
 	evalInput := RequestEvalInput{
 		NaturalLanguage:  input.NaturalLanguage,
@@ -81,7 +86,7 @@ func (v *ResponseValidator) ValidateResponse(ctx context.Context, input RequestE
 	// Send the request to Anthropic
 	msg, err := client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     v.model,
-		MaxTokens: 1024,
+		MaxTokens: 1024, // Standard token limit
 		System: []anthropic.TextBlockParam{
 			{Text: systemPrompt},
 		},
@@ -91,12 +96,12 @@ func (v *ResponseValidator) ValidateResponse(ctx context.Context, input RequestE
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("Anthropic API error: %w", err)
+		return nil, fmt.Errorf("anthropic API error: %w", err)
 	}
 
 	// Extract the response content
 	if len(msg.Content) == 0 {
-		return nil, fmt.Errorf("empty response from Anthropic")
+		return nil, errors.New("empty response from Anthropic")
 	}
 
 	responseText := msg.Content[0].Text
@@ -110,19 +115,22 @@ func (v *ResponseValidator) ValidateResponse(ctx context.Context, input RequestE
 	}
 
 	if jsonStr == "" {
-		return nil, fmt.Errorf("could not extract JSON from response")
+		return nil, errors.New("could not extract JSON from response")
 	}
 
 	var result ValidationResult
-	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
-		return nil, fmt.Errorf("failed to parse validation response: %w", err)
+	if unmarshalErr := json.Unmarshal([]byte(jsonStr), &result); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to parse validation response: %w", unmarshalErr)
 	}
 
 	return &result, nil
 }
 
 // ValidateInput validates a natural language input for clarity and specificity
-func (v *ResponseValidator) ValidateInput(ctx context.Context, naturalLanguage string) (*InputValidationResult, error) {
+func (v *ResponseValidator) ValidateInput(
+	ctx context.Context,
+	naturalLanguage string,
+) (*InputValidationResult, error) {
 	// Create the prompt for input validation
 	systemPrompt := `You are an expert evaluator for HTTP request generation inputs. Your task is to assess
 the clarity, completeness, and specificity of a natural language description that will be used to generate an HTTP request.
@@ -140,7 +148,8 @@ For each criterion, assign a score from 0.0 to 1.0:
 
 Provide your assessment as JSON with detailed reasoning.`
 
-	userPrompt := fmt.Sprintf(`Please evaluate this natural language description that will be used to generate an HTTP request:
+	userPrompt := fmt.Sprintf(
+		`Please evaluate this natural language description that will be used to generate an HTTP request:
 
 "%s"
 
@@ -154,7 +163,9 @@ Provide your evaluation in JSON format with these fields:
   "error_severity": "low|medium|high|none",
   "analysis": "Your detailed assessment",
   "recommendations": "Suggestions for improving the input"
-}`, naturalLanguage)
+}`,
+		naturalLanguage,
+	)
 
 	// Create Anthropic client
 	client := anthropic.NewClient() // uses ANTHROPIC_API_KEY env var
@@ -162,7 +173,7 @@ Provide your evaluation in JSON format with these fields:
 	// Send the request to Anthropic
 	msg, err := client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     v.model,
-		MaxTokens: 1024,
+		MaxTokens: 1024, // Standard token limit
 		System: []anthropic.TextBlockParam{
 			{Text: systemPrompt},
 		},
@@ -172,12 +183,12 @@ Provide your evaluation in JSON format with these fields:
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("Anthropic API error: %w", err)
+		return nil, fmt.Errorf("anthropic API error: %w", err)
 	}
 
 	// Extract the response content
 	if len(msg.Content) == 0 {
-		return nil, fmt.Errorf("empty response from Anthropic")
+		return nil, errors.New("empty response from Anthropic")
 	}
 
 	responseText := msg.Content[0].Text
@@ -191,19 +202,19 @@ Provide your evaluation in JSON format with these fields:
 	}
 
 	if jsonStr == "" {
-		return nil, fmt.Errorf("could not extract JSON from response")
+		return nil, errors.New("could not extract JSON from response")
 	}
 
 	var result InputValidationResult
-	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
-		return nil, fmt.Errorf("failed to parse validation response: %w", err)
+	if unmarshalErr := json.Unmarshal([]byte(jsonStr), &result); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to parse validation response: %w", unmarshalErr)
 	}
 
 	return &result, nil
 }
 
 // ValidateURL validates if a URL is well-formed and secure
-func ValidateURL(urlStr string) (isValid bool, message string) {
+func ValidateURL(urlStr string) (bool, string) {
 	if urlStr == "" {
 		return false, "URL is empty"
 	}
@@ -234,7 +245,7 @@ func ValidateURL(urlStr string) (isValid bool, message string) {
 }
 
 // ValidateHeaders validates HTTP headers for common issues
-func ValidateHeaders(headers map[string]string) (isValid bool, message string) {
+func ValidateHeaders(headers map[string]string) (bool, string) {
 	if len(headers) == 0 {
 		return true, ""
 	}
@@ -243,13 +254,24 @@ func ValidateHeaders(headers map[string]string) (isValid bool, message string) {
 
 	for k, v := range headers {
 		// Check for sensitive information in headers
-		sensitiveKeys := []string{"authorization", "api-key", "apikey", "secret", "password", "token"}
+		sensitiveKeys := []string{
+			"authorization",
+			"api-key",
+			"apikey",
+			"secret",
+			"password",
+			"token",
+		}
 
 		for _, sensitive := range sensitiveKeys {
 			if strings.Contains(strings.ToLower(k), sensitive) {
 				// Don't log the actual value for security reasons
-				if len(v) > 20 {
-					issues = append(issues, fmt.Sprintf("Header '%s' may contain sensitive information", k))
+				const sensitiveMinLength = 20
+				if len(v) > sensitiveMinLength {
+					issues = append(
+						issues,
+						fmt.Sprintf("Header '%s' may contain sensitive information", k),
+					)
 				}
 			}
 		}
@@ -275,7 +297,7 @@ func ValidateHeaders(headers map[string]string) (isValid bool, message string) {
 }
 
 // ValidateBody validates request body content
-func ValidateBody(body, contentType string) (isValid bool, message string) {
+func ValidateBody(body, contentType string) (bool, string) {
 	if body == "" {
 		return true, ""
 	}
@@ -283,7 +305,8 @@ func ValidateBody(body, contentType string) (isValid bool, message string) {
 	contentType = strings.ToLower(contentType)
 
 	// Validate JSON body
-	if strings.Contains(contentType, "application/json") || strings.HasPrefix(strings.TrimSpace(body), "{") {
+	if strings.Contains(contentType, "application/json") ||
+		strings.HasPrefix(strings.TrimSpace(body), "{") {
 		var js interface{}
 		err := json.Unmarshal([]byte(body), &js)
 		if err != nil {
@@ -360,7 +383,7 @@ func ValidateRequestSpec(spec *httpx.RequestSpec) (bool, map[string]string) {
 	}
 
 	// Validate method and body combination
-	if (spec.Method == "GET" || spec.Method == "HEAD") && spec.Body != "" {
+	if (spec.Method == http.MethodGet || spec.Method == http.MethodHead) && spec.Body != "" {
 		validations["method_body"] = fmt.Sprintf("%s requests should not have a body", spec.Method)
 	}
 
@@ -370,7 +393,11 @@ func ValidateRequestSpec(spec *httpx.RequestSpec) (bool, map[string]string) {
 }
 
 // FetchAndValidateResponse executes a request and validates the response
-func (v *ResponseValidator) FetchAndValidateResponse(ctx context.Context, spec *httpx.RequestSpec, evalInput RequestEvalInput) (*ValidationResult, error) {
+func (v *ResponseValidator) FetchAndValidateResponse(
+	ctx context.Context,
+	spec *httpx.RequestSpec,
+	evalInput RequestEvalInput,
+) (*ValidationResult, error) {
 	// Execute the request
 	response, err := httpx.ExecuteWithContext(ctx, spec)
 	if err != nil {

@@ -31,8 +31,12 @@ var (
 
 var (
 	// Command line flags
-	timeout            = flag.Int("t", 30, "Timeout in seconds for the HTTP request")
-	model              = flag.String("m", anthropic.ModelClaude3_7SonnetLatest, "Anthropic model to use")
+	timeout = flag.Int("t", 30, "Timeout in seconds for the HTTP request")
+	model   = flag.String(
+		"m",
+		anthropic.ModelClaude3_7SonnetLatest,
+		"Anthropic model to use",
+	)
 	jsonOnly           = flag.Bool("j", false, "Output response body as JSON only")
 	verbose            = flag.Bool("v", false, "Verbose output (include request details)")
 	showVersion        = flag.Bool("version", false, "Show version information")
@@ -96,6 +100,130 @@ For more information on a specific command, run 'ncurl <command> -help'
 	fmt.Println(helpText)
 }
 
+// isContentBinary determines if content should be treated as binary based on content type
+func isContentBinary(contentType string) bool {
+	return !strings.Contains(contentType, "text/") &&
+		!strings.Contains(contentType, "application/json") &&
+		!strings.Contains(contentType, "application/xml") &&
+		!strings.Contains(contentType, "application/javascript")
+}
+
+// outputJSONOnlyMode outputs the response body in JSON-only mode
+func outputJSONOnlyMode(body []byte, isBinary bool) {
+	if isBinary {
+		_, _ = os.Stdout.Write(body)
+	} else {
+		// For text-based content, use print which does string conversion
+		fmt.Print(string(body))
+
+		// Add a newline if not already present
+		if len(body) > 0 && body[len(body)-1] != '\n' {
+			fmt.Println()
+		}
+	}
+}
+
+// getPromptString gets the prompt string from history or command line args
+func getPromptString(
+	historyManager *history.Manager,
+	interactiveHistory bool,
+	historyRerun int,
+	exitCode *int,
+	logger *log.Logger,
+) (string, bool) {
+	switch {
+	case interactiveHistory && historyManager != nil:
+		// Get command from interactive history selection
+		cmd, promptErr := historyManager.PromptForHistorySelection()
+		if promptErr != nil {
+			logger.Printf("Failed to select from history: %v\n", promptErr)
+			*exitCode = 1
+			return "", true
+		}
+		return cmd, false
+
+	case historyRerun > 0 && historyManager != nil:
+		// Get command from history by index
+		entry, historyErr := historyManager.GetEntryByIndex(historyRerun)
+		if historyErr != nil {
+			logger.Printf("Failed to retrieve history entry: %v\n", historyErr)
+			*exitCode = 1
+			return "", true
+		}
+		return entry.Command, false
+
+	default:
+		// Get command from command line args
+		args := flag.Args()
+		if len(args) < 1 {
+			fmt.Println("usage: ncurl [options] \"<natural language request>\"")
+			fmt.Println("\nExamples:")
+			fmt.Println("  ncurl \"get the weather for New York\"")
+			fmt.Println("  ncurl \"post a new user to jsonplaceholder\"")
+			fmt.Println("\nUse -help for detailed usage information and more examples")
+			fmt.Println("\nOptions:")
+			flag.PrintDefaults()
+			*exitCode = 1
+			return "", true
+		}
+		return strings.Join(args, " "), false
+	}
+}
+
+// outputStandardMode outputs the response in standard mode with metadata
+func outputStandardMode(response *httpx.Response, verbose bool, isBinary bool) {
+	// Print metadata and headers
+	fmt.Printf("Status: %s\n", response.Status)
+	fmt.Printf("Content-Type: %s\n", response.Header.Get("Content-Type"))
+
+	if verbose {
+		fmt.Println("Headers:")
+		for k, v := range response.Header {
+			fmt.Printf("  %s: %s\n", k, v)
+		}
+	}
+
+	fmt.Println()
+
+	// Print the response body
+	if isBinary {
+		// For binary data, write raw bytes
+		_, _ = os.Stdout.Write(response.Body)
+		fmt.Println() // Add a newline after binary data
+	} else {
+		// For text data, convert to string
+		fmt.Println(string(response.Body))
+	}
+}
+
+// handleHistoryOperations handles showing and searching command history
+// Returns true if a history operation was executed (indicating the caller should return)
+func handleHistoryOperations(
+	historyManager *history.Manager,
+	logger *log.Logger,
+	showHistory bool,
+	searchTerm string,
+	exitCode *int,
+) bool {
+	if showHistory {
+		if err := historyManager.PrintHistory(); err != nil {
+			logger.Printf("Failed to print history: %v\n", err)
+			*exitCode = 1
+		}
+		return true
+	}
+
+	if searchTerm != "" {
+		if err := historyManager.PrintSearchResults(searchTerm); err != nil {
+			logger.Printf("Failed to search history: %v\n", err)
+			*exitCode = 1
+		}
+		return true
+	}
+
+	return false
+}
+
 func main() {
 	// Set up exit code handling more cleanly
 	var exitCode int
@@ -131,64 +259,28 @@ func main() {
 		return
 	}
 
-	// Show or search command history if requested
-	if historyManager != nil {
-		if *showHistory {
-			if err := historyManager.PrintHistory(); err != nil {
-				errorLogger.Printf("Failed to print history: %v\n", err)
-				exitCode = 1
-			}
-			return
-		}
-
-		if *historySearch != "" {
-			if err := historyManager.PrintSearchResults(*historySearch); err != nil {
-				errorLogger.Printf("Failed to search history: %v\n", err)
-				exitCode = 1
-			}
-			return
-		}
+	// Handle history operations
+	if historyManager != nil &&
+		handleHistoryOperations(
+			historyManager,
+			errorLogger,
+			*showHistory,
+			*historySearch,
+			&exitCode,
+		) {
+		return
 	}
 
 	// Get the command to execute - either from history, interactive selection, or command line args
-	var prompt string
-
-	switch {
-	case *interactiveHistory && historyManager != nil:
-		// Get command from interactive history selection
-		cmd, err := historyManager.PromptForHistorySelection()
-		if err != nil {
-			errorLogger.Printf("Failed to select from history: %v\n", err)
-			exitCode = 1
-			return
-		}
-		prompt = cmd
-
-	case *historyRerun > 0 && historyManager != nil:
-		// Get command from history by index
-		entry, err := historyManager.GetEntryByIndex(*historyRerun)
-		if err != nil {
-			errorLogger.Printf("Failed to retrieve history entry: %v\n", err)
-			exitCode = 1
-			return
-		}
-		prompt = entry.Command
-
-	default:
-		// Get command from command line args
-		args := flag.Args()
-		if len(args) < 1 {
-			fmt.Println("usage: ncurl [options] \"<natural language request>\"")
-			fmt.Println("\nExamples:")
-			fmt.Println("  ncurl \"get the weather for New York\"")
-			fmt.Println("  ncurl \"post a new user to jsonplaceholder\"")
-			fmt.Println("\nUse -help for detailed usage information and more examples")
-			fmt.Println("\nOptions:")
-			flag.PrintDefaults()
-			exitCode = 1
-			return
-		}
-		prompt = strings.Join(args, " ")
+	prompt, shouldReturn := getPromptString(
+		historyManager,
+		*interactiveHistory,
+		*historyRerun,
+		&exitCode,
+		errorLogger,
+	)
+	if shouldReturn {
+		return
 	}
 
 	// Ensure API key is set
@@ -196,7 +288,9 @@ func main() {
 		errorLogger.Println("ANTHROPIC_API_KEY environment variable is required")
 		fmt.Println("Error: ANTHROPIC_API_KEY environment variable is required")
 		fmt.Println("Please set it with: export ANTHROPIC_API_KEY=\"your-key-here\"")
-		fmt.Println("Or for a single command: ANTHROPIC_API_KEY=\"your-key-here\" ncurl \"your query\"")
+		fmt.Println(
+			"Or for a single command: ANTHROPIC_API_KEY=\"your-key-here\" ncurl \"your query\"",
+		)
 		exitCode = 1
 		return
 	}
@@ -204,9 +298,7 @@ func main() {
 	// Record command in history when exiting
 	defer func() {
 		if historyManager != nil {
-			if err := historyManager.AddEntry(prompt, exitCode == 0); err != nil {
-				// Error occurred but we don't want to log it
-			}
+			_ = historyManager.AddEntry(prompt, exitCode == 0)
 		}
 	}()
 
@@ -258,49 +350,13 @@ func main() {
 		return
 	}
 
-	// Use a different approach for binary vs text content
+	// Determine content type and handle output appropriately
 	contentType := response.Header.Get("Content-Type")
-	isBinary := !(strings.Contains(contentType, "text/") ||
-		strings.Contains(contentType, "application/json") ||
-		strings.Contains(contentType, "application/xml") ||
-		strings.Contains(contentType, "application/javascript"))
+	isBinary := isContentBinary(contentType)
 
 	if *jsonOnly {
-		// For JSON-only mode, write the raw body without conversion for binary data
-		if isBinary {
-			_, _ = os.Stdout.Write(response.Body)
-		} else {
-			// For text-based content, use print which does string conversion
-			fmt.Print(string(response.Body))
-
-			// Add a newline if not already present
-			if len(response.Body) > 0 && response.Body[len(response.Body)-1] != '\n' {
-				fmt.Println()
-			}
-		}
+		outputJSONOnlyMode(response.Body, isBinary)
 	} else {
-		// For standard mode, print metadata and headers
-		fmt.Printf("Status: %s\n", response.Status)
-		fmt.Printf("Content-Type: %s\n", response.Header.Get("Content-Type"))
-
-		if *verbose {
-			fmt.Println("Headers:")
-			for k, v := range response.Header {
-				fmt.Printf("  %s: %s\n", k, v)
-			}
-		}
-
-		fmt.Println()
-
-		// Print the response body
-		if isBinary {
-			// For binary data, write raw bytes
-			_, _ = os.Stdout.Write(response.Body)
-			fmt.Println() // Add a newline after binary data
-		} else {
-			// For text data, convert to string
-			fmt.Println(string(response.Body))
-		}
+		outputStandardMode(response, *verbose, isBinary)
 	}
-
 }

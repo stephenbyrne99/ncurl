@@ -114,8 +114,8 @@ func main() {
 	}
 
 	// Load test cases into evaluator
-	if err := evaluator.LoadTestCases(testCases); err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading test cases: %v\n", err)
+	if loadErr := evaluator.LoadTestCases(testCases); loadErr != nil {
+		fmt.Fprintf(os.Stderr, "Error loading test cases: %v\n", loadErr)
 		exitCode = 1
 		return
 	}
@@ -133,9 +133,9 @@ func main() {
 	var output string
 	if *jsonFlag {
 		// Output as JSON
-		jsonData, err := json.MarshalIndent(results, "", "  ")
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Error generating JSON output: %v\n", err)
+		jsonData, jsonErr := json.MarshalIndent(results, "", "  ")
+		if jsonErr != nil {
+			fmt.Fprintf(os.Stderr, "Error generating JSON output: %v\n", jsonErr)
 			exitCode = 1
 			return
 		}
@@ -149,14 +149,14 @@ func main() {
 	if *outputFile != "" {
 		// Ensure directory exists
 		dir := filepath.Dir(*outputFile)
-		if err := os.MkdirAll(dir, 0750); err != nil {
-			fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
+		if mkdirErr := os.MkdirAll(dir, 0750); mkdirErr != nil {
+			fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", mkdirErr)
 			exitCode = 1
 			return
 		}
 
-		if err := os.WriteFile(*outputFile, []byte(output), 0600); err != nil {
-			fmt.Fprintf(os.Stderr, "Error writing output file: %v\n", err)
+		if writeErr := os.WriteFile(*outputFile, []byte(output), 0600); writeErr != nil {
+			fmt.Fprintf(os.Stderr, "Error writing output file: %v\n", writeErr)
 			exitCode = 1
 			return
 		}
@@ -181,7 +181,8 @@ func main() {
 		}
 
 		avgScore := totalScore / float64(totalTests)
-		successRate := float64(successCount) / float64(totalTests) * 100
+		const percentMultiplier = 100
+		successRate := float64(successCount) / float64(totalTests) * percentMultiplier
 
 		fmt.Fprintf(os.Stderr, "Evaluation Summary:\n")
 		fmt.Fprintf(os.Stderr, "- Total Tests: %d\n", totalTests)

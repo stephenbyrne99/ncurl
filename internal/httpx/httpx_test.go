@@ -1,4 +1,4 @@
-package httpx
+package httpx_test
 
 import (
 	"context"
@@ -7,10 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	"github.com/stephenbyrne99/ncurl/internal/httpx"
 )
 
 func TestNewRequestSpec(t *testing.T) {
-	spec := NewRequestSpec()
+	spec := httpx.NewRequestSpec()
 
 	if spec.Method != http.MethodGet {
 		t.Errorf("Expected default method to be GET, got %s", spec.Method)
@@ -24,12 +26,12 @@ func TestNewRequestSpec(t *testing.T) {
 func TestRequestSpec_Validate(t *testing.T) {
 	testCases := []struct {
 		name    string
-		spec    *RequestSpec
+		spec    *httpx.RequestSpec
 		wantErr bool
 	}{
 		{
 			name: "Valid spec",
-			spec: &RequestSpec{
+			spec: &httpx.RequestSpec{
 				Method: http.MethodGet,
 				URL:    "https://example.com",
 			},
@@ -37,21 +39,21 @@ func TestRequestSpec_Validate(t *testing.T) {
 		},
 		{
 			name: "Missing URL",
-			spec: &RequestSpec{
+			spec: &httpx.RequestSpec{
 				Method: http.MethodGet,
 			},
 			wantErr: true,
 		},
 		{
 			name: "Empty method gets default",
-			spec: &RequestSpec{
+			spec: &httpx.RequestSpec{
 				URL: "https://example.com",
 			},
 			wantErr: false,
 		},
 		{
 			name: "Nil headers gets initialized",
-			spec: &RequestSpec{
+			spec: &httpx.RequestSpec{
 				Method:  http.MethodPost,
 				URL:     "https://example.com",
 				Headers: nil,
@@ -104,7 +106,7 @@ func TestExecute(t *testing.T) {
 	defer server.Close()
 
 	// Create request spec
-	spec := &RequestSpec{
+	spec := &httpx.RequestSpec{
 		Method: http.MethodPost,
 		URL:    server.URL,
 		Headers: map[string]string{
@@ -115,7 +117,7 @@ func TestExecute(t *testing.T) {
 	}
 
 	// Execute request
-	resp, err := Execute(spec)
+	resp, err := httpx.Execute(spec)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -145,12 +147,12 @@ func TestExecuteWithDefaults(t *testing.T) {
 	defer server.Close()
 
 	// Create request spec with empty values
-	spec := &RequestSpec{
+	spec := &httpx.RequestSpec{
 		URL: server.URL,
 	}
 
 	// Execute request
-	resp, err := Execute(spec)
+	resp, err := httpx.Execute(spec)
 	if err != nil {
 		t.Fatalf("Execute failed: %v", err)
 	}
@@ -163,7 +165,7 @@ func TestExecuteWithDefaults(t *testing.T) {
 
 func TestExecuteWithContext(t *testing.T) {
 	// Setup test server
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		// Simulate work that takes time
 		time.Sleep(100 * time.Millisecond)
 		w.WriteHeader(http.StatusOK)
@@ -171,7 +173,7 @@ func TestExecuteWithContext(t *testing.T) {
 	defer server.Close()
 
 	// Create request spec
-	spec := &RequestSpec{
+	spec := &httpx.RequestSpec{
 		Method: http.MethodGet,
 		URL:    server.URL,
 	}
@@ -180,7 +182,7 @@ func TestExecuteWithContext(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel() // Cancel immediately
 
-	_, err := ExecuteWithContext(ctx, spec)
+	_, err := httpx.ExecuteWithContext(ctx, spec)
 	if err == nil {
 		t.Error("Expected error with cancelled context, got nil")
 	}
@@ -189,7 +191,7 @@ func TestExecuteWithContext(t *testing.T) {
 	ctx, cancel = context.WithTimeout(context.Background(), 50*time.Millisecond)
 	defer cancel()
 
-	_, err = ExecuteWithContext(ctx, spec)
+	_, err = httpx.ExecuteWithContext(ctx, spec)
 	if err == nil {
 		t.Error("Expected error with timeout context, got nil")
 	}
@@ -198,7 +200,7 @@ func TestExecuteWithContext(t *testing.T) {
 	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	resp, err := ExecuteWithContext(ctx, spec)
+	resp, err := httpx.ExecuteWithContext(ctx, spec)
 	if err != nil {
 		t.Fatalf("ExecuteWithContext failed: %v", err)
 	}
@@ -210,7 +212,7 @@ func TestExecuteWithContext(t *testing.T) {
 
 func TestRequestErrorsUnwrap(t *testing.T) {
 	originalErr := errors.New("original error")
-	requestErr := &RequestError{
+	requestErr := &httpx.RequestError{
 		Err:     originalErr,
 		Message: "test message",
 		URL:     "https://example.com",
@@ -218,7 +220,7 @@ func TestRequestErrorsUnwrap(t *testing.T) {
 	}
 
 	unwrappedErr := errors.Unwrap(requestErr)
-	if unwrappedErr != originalErr {
+	if !errors.Is(unwrappedErr, originalErr) {
 		t.Errorf("Unwrap() = %v, want %v", unwrappedErr, originalErr)
 	}
 }

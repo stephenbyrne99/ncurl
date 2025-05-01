@@ -36,8 +36,10 @@ func (e *ModelError) Error() string {
 	if e.RawJSON != "" {
 		// Truncate long raw JSON responses
 		rawJSON := e.RawJSON
-		if len(rawJSON) > 100 {
-			rawJSON = rawJSON[:97] + "..."
+		const maxJSONLength = 100
+		const ellipsisLength = 3
+		if len(rawJSON) > maxJSONLength {
+			rawJSON = rawJSON[:maxJSONLength-ellipsisLength] + "..."
 		}
 		msg += fmt.Sprintf(" (raw: %s)", rawJSON)
 	}
@@ -49,9 +51,9 @@ func (e *ModelError) Unwrap() error {
 	return e.Err
 }
 
-// cleanJSONResponse removes markdown formatting from a model response
+// CleanJSONResponse removes markdown formatting from a model response
 // to extract the actual JSON content.
-func cleanJSONResponse(input string) string {
+func CleanJSONResponse(input string) string {
 	// Remove markdown code block backticks and language annotations
 	re := regexp.MustCompile("```(?:json)?(.*?)```")
 	matches := re.FindStringSubmatch(input)
@@ -75,7 +77,7 @@ func cleanJSONResponse(input string) string {
 // Client provides methods for translating natural language to HTTP requests
 type Client struct {
 	anthropicClient *anthropic.Client
-	model           string
+	Model           string // Exported for testing
 }
 
 // ClientOption is a functional option for configuring the Client
@@ -98,7 +100,7 @@ func NewClient(model string, opts ...ClientOption) *Client {
 	client := anthropic.NewClient() // reads $ANTHROPIC_API_KEY
 	c := &Client{
 		anthropicClient: &client,
-		model:           model,
+		Model:           model,
 	}
 
 	// Apply options
@@ -116,7 +118,7 @@ func (c *Client) GenerateRequestSpec(ctx context.Context, naturalLanguage string
 		return nil, &ModelError{
 			Err:     ErrInvalidRequest,
 			Message: "empty natural language prompt",
-			Model:   c.model,
+			Model:   c.Model,
 		}
 	}
 
@@ -171,8 +173,8 @@ Your goal is to accurately translate what the user wants into a proper HTTP requ
 `
 
 	msg, err := c.anthropicClient.Messages.New(ctx, anthropic.MessageNewParams{
-		Model:     c.model,
-		MaxTokens: 1024,
+		Model:     c.Model,
+		MaxTokens: 1024, // A standard token limit for this type of request
 		System: []anthropic.TextBlockParam{
 			{Text: systemPrompt},
 		},
@@ -189,9 +191,9 @@ Your goal is to accurately translate what the user wants into a proper HTTP requ
 	// Handle API errors
 	if err != nil {
 		return nil, &ModelError{
-			Err:     fmt.Errorf("%w: %v", ErrModelFailure, err),
+			Err:     fmt.Errorf("%w: %w", ErrModelFailure, err),
 			Message: "failed to execute model request",
-			Model:   c.model,
+			Model:   c.Model,
 			Prompt:  naturalLanguage,
 		}
 	}
@@ -201,7 +203,7 @@ Your goal is to accurately translate what the user wants into a proper HTTP requ
 		return nil, &ModelError{
 			Err:     ErrEmptyResponse,
 			Message: "model returned empty content",
-			Model:   c.model,
+			Model:   c.Model,
 			Prompt:  naturalLanguage,
 		}
 	}
@@ -210,25 +212,25 @@ Your goal is to accurately translate what the user wants into a proper HTTP requ
 	rawJSON := msg.Content[0].Text
 
 	// Clean up the response - sometimes Claude returns markdown-formatted JSON
-	cleanJSON := cleanJSONResponse(rawJSON)
+	cleanJSON := CleanJSONResponse(rawJSON)
 
 	var spec httpx.RequestSpec
-	if err := json.Unmarshal([]byte(cleanJSON), &spec); err != nil {
+	if unmarshalErr := json.Unmarshal([]byte(cleanJSON), &spec); unmarshalErr != nil {
 		return nil, &ModelError{
-			Err:     fmt.Errorf("%w: %v", ErrInvalidJSON, err),
+			Err:     fmt.Errorf("%w: %w", ErrInvalidJSON, unmarshalErr),
 			Message: "failed to parse model response as JSON",
-			Model:   c.model,
+			Model:   c.Model,
 			Prompt:  naturalLanguage,
 			RawJSON: rawJSON,
 		}
 	}
 
 	// Validate the RequestSpec
-	if err := spec.Validate(); err != nil {
+	if validateErr := spec.Validate(); validateErr != nil {
 		return nil, &ModelError{
-			Err:     err,
+			Err:     validateErr,
 			Message: "model generated invalid request specification",
-			Model:   c.model,
+			Model:   c.Model,
 			Prompt:  naturalLanguage,
 			RawJSON: rawJSON,
 		}

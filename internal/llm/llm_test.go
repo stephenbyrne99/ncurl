@@ -1,4 +1,4 @@
-package llm
+package llm_test
 
 import (
 	"context"
@@ -8,27 +8,32 @@ import (
 	"time"
 
 	"github.com/anthropics/anthropic-sdk-go"
+	"github.com/stephenbyrne99/ncurl/internal/llm"
 )
 
 func TestNewClient(t *testing.T) {
 	// Test with default model
-	client := NewClient("")
-	if client.model != anthropic.ModelClaude3_7SonnetLatest {
-		t.Errorf("Expected default model to be %s, got %s", anthropic.ModelClaude3_7SonnetLatest, client.model)
+	client := llm.NewClient("")
+	if client.Model != anthropic.ModelClaude3_7SonnetLatest {
+		t.Errorf(
+			"Expected default model to be %s, got %s",
+			anthropic.ModelClaude3_7SonnetLatest,
+			client.Model,
+		)
 	}
 
 	// Test with specified model
 	testModel := "claude-3-opus-20240229"
-	client = NewClient(testModel)
-	if client.model != testModel {
-		t.Errorf("Expected model to be %s, got %s", testModel, client.model)
+	client = llm.NewClient(testModel)
+	if client.Model != testModel {
+		t.Errorf("Expected model to be %s, got %s", testModel, client.Model)
 	}
 
 	// Test with options
 	mockClient := anthropic.NewClient()
-	client = NewClient(testModel, WithAnthropicClient(&mockClient))
-	if client.model != testModel {
-		t.Errorf("Expected model to be %s, got %s", testModel, client.model)
+	client = llm.NewClient(testModel, llm.WithAnthropicClient(&mockClient))
+	if client.Model != testModel {
+		t.Errorf("Expected model to be %s, got %s", testModel, client.Model)
 	}
 }
 
@@ -38,7 +43,7 @@ func TestGenerateRequestSpec(t *testing.T) {
 		t.Skip("Skipping test; ANTHROPIC_API_KEY not set")
 	}
 
-	client := NewClient("")
+	client := llm.NewClient("")
 	ctx := context.Background()
 
 	testCases := []struct {
@@ -97,7 +102,7 @@ func TestGenerateRequestSpec(t *testing.T) {
 func TestModelError(t *testing.T) {
 	// Test error message formatting
 	origErr := errors.New("original error")
-	modelErr := &ModelError{
+	modelErr := &llm.ModelError{
 		Err:     origErr,
 		Message: "test message",
 		Model:   "claude-3",
@@ -113,17 +118,17 @@ func TestModelError(t *testing.T) {
 
 	// Test Unwrap() method
 	unwrappedErr := errors.Unwrap(modelErr)
-	if unwrappedErr != origErr {
+	if !errors.Is(unwrappedErr, origErr) {
 		t.Errorf("Unwrap() = %v, want %v", unwrappedErr, origErr)
 	}
 
 	// Test long JSON truncation
 	longJSON := ""
-	for i := 0; i < 200; i++ {
+	for range 200 {
 		longJSON += "x"
 	}
 
-	modelErrLong := &ModelError{
+	modelErrLong := &llm.ModelError{
 		Err:     origErr,
 		Message: "test message",
 		Model:   "claude-3",
@@ -142,7 +147,7 @@ func TestContextCancellation(t *testing.T) {
 		t.Skip("Skipping test; ANTHROPIC_API_KEY not set")
 	}
 
-	client := NewClient("")
+	client := llm.NewClient("")
 
 	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
@@ -209,7 +214,7 @@ func TestCleanJSONResponse(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := cleanJSONResponse(tc.input)
+			result := llm.CleanJSONResponse(tc.input)
 			if result != tc.expected {
 				t.Errorf("Expected %q, got %q", tc.expected, result)
 			}
@@ -219,5 +224,7 @@ func TestCleanJSONResponse(t *testing.T) {
 
 // Helper function to check if a string contains a substring
 func contains(s, substr string) bool {
-	return s == substr || len(s) >= len(substr) && s[:len(substr)] == substr || len(s) >= len(substr) && s[len(s)-len(substr):] == substr || len(s) >= len(substr) && s[1:len(s)-1] != s && contains(s[1:], substr)
+	return s == substr || len(s) >= len(substr) && s[:len(substr)] == substr ||
+		len(s) >= len(substr) && s[len(s)-len(substr):] == substr ||
+		len(s) >= len(substr) && s[1:len(s)-1] != s && contains(s[1:], substr)
 }

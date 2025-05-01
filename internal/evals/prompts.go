@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/anthropics/anthropic-sdk-go"
@@ -141,8 +143,8 @@ func RenderTemplate(tmpl string, data interface{}) (string, error) {
 	}
 
 	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
+	if execErr := t.Execute(&buf, data); execErr != nil {
+		return "", fmt.Errorf("failed to execute template: %w", execErr)
 	}
 
 	return buf.String(), nil
@@ -171,9 +173,9 @@ func EvaluateWithAnthropicPrompt(ctx context.Context, model string, input Reques
 	client := anthropic.NewClient() // uses ANTHROPIC_API_KEY env var
 
 	// Send the request to Anthropic
-	msg, err := client.Messages.New(ctx, anthropic.MessageNewParams{
+	msg, msgErr := client.Messages.New(ctx, anthropic.MessageNewParams{
 		Model:     model,
-		MaxTokens: 1024,
+		MaxTokens: 1024, // Standard token limit
 		System: []anthropic.TextBlockParam{
 			{Text: systemPrompt},
 		},
@@ -182,13 +184,13 @@ func EvaluateWithAnthropicPrompt(ctx context.Context, model string, input Reques
 		},
 	})
 
-	if err != nil {
-		return 0, "", fmt.Errorf("Anthropic API error: %w", err)
+	if msgErr != nil {
+		return 0, "", fmt.Errorf("anthropic API error: %w", msgErr)
 	}
 
 	// Extract the response content
 	if len(msg.Content) == 0 {
-		return 0, "", fmt.Errorf("empty response from Anthropic")
+		return 0, "", errors.New("empty response from Anthropic")
 	}
 
 	responseText := msg.Content[0].Text
@@ -206,19 +208,19 @@ func EvaluateWithAnthropicPrompt(ctx context.Context, model string, input Reques
 
 	// Try to extract JSON from the response
 	var jsonStr string
-	if start := bytes.Index([]byte(responseText), []byte("{")); start != -1 {
-		if end := bytes.LastIndex([]byte(responseText), []byte("}")); end != -1 && end > start {
+	if start := strings.Index(responseText, "{"); start != -1 {
+		if end := strings.LastIndex(responseText, "}"); end != -1 && end > start {
 			jsonStr = responseText[start : end+1]
 		}
 	}
 
 	if jsonStr == "" {
-		return 0, responseText, fmt.Errorf("could not extract JSON from response")
+		return 0, responseText, errors.New("could not extract JSON from response")
 	}
 
 	var evalResponse EvaluationResponse
-	if err := json.Unmarshal([]byte(jsonStr), &evalResponse); err != nil {
-		return 0, responseText, fmt.Errorf("failed to parse evaluation response: %w", err)
+	if unmarshalErr := json.Unmarshal([]byte(jsonStr), &evalResponse); unmarshalErr != nil {
+		return 0, responseText, fmt.Errorf("failed to parse evaluation response: %w", unmarshalErr)
 	}
 
 	// Format the details including reasoning and suggestions

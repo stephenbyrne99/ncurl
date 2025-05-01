@@ -104,12 +104,12 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 	}
 
 	client := &http.Client{
-		Timeout: 30 * time.Second, // Default timeout
+		Timeout: 30 * time.Second, // Default client timeout
 	}
 	resp, doErr := client.Do(req)
 	if doErr != nil {
 		return nil, &RequestError{
-			Err:     fmt.Errorf("%w: %v", ErrRequestFailed, doErr),
+			Err:     fmt.Errorf("%w: %w", ErrRequestFailed, doErr),
 			Message: "request failed",
 			URL:     spec.URL,
 			Method:  spec.Method,
@@ -126,7 +126,7 @@ func ExecuteWithContext(ctx context.Context, spec *RequestSpec) (*Response, erro
 	body, readErr := io.ReadAll(resp.Body)
 	if readErr != nil {
 		return nil, &RequestError{
-			Err:     fmt.Errorf("%w: %v", ErrReadResponse, readErr),
+			Err:     fmt.Errorf("%w: %w", ErrReadResponse, readErr),
 			Message: "failed to read response body",
 			URL:     spec.URL,
 			Method:  spec.Method,

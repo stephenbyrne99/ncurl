@@ -63,7 +63,7 @@ type Evaluator struct {
 	client     *llm.Client
 	testServer *httptest.Server
 	cases      []EvalCase
-	model      string
+	Model      string // Exported for testing
 	timeout    time.Duration
 }
 
@@ -76,12 +76,13 @@ func NewEvaluator(model string, timeout time.Duration) *Evaluator {
 
 	// Use default timeout if none specified
 	if timeout == 0 {
-		timeout = 30 * time.Second
+		const defaultTimeoutSeconds = 30
+		timeout = defaultTimeoutSeconds * time.Second
 	}
 
 	return &Evaluator{
 		client:  llm.NewClient(model),
-		model:   model,
+		Model:   model,
 		timeout: timeout,
 	}
 }
@@ -156,7 +157,9 @@ func (e *Evaluator) runCase(ctx context.Context, evalCase *EvalCase) (EvalResult
 		result.Score = 0.0
 		result.Error = err.Error()
 		result.Duration = time.Since(startTime).Milliseconds()
-		return result, nil // Return result with error info, not the error itself
+		// We capture the error in the result and also return it
+		// so that the caller can handle it appropriately
+		return result, err
 	}
 
 	result.ActualURL = spec.URL
@@ -164,7 +167,8 @@ func (e *Evaluator) runCase(ctx context.Context, evalCase *EvalCase) (EvalResult
 
 	// Validate the result
 	score, details := e.evaluateSpec(spec, evalCase)
-	result.Success = score >= 0.8 // Consider 80% or above a success
+	const successThreshold = 0.8 // 80% threshold
+	result.Success = score >= successThreshold
 	result.Score = score
 	result.Details = details
 	result.Duration = time.Since(startTime).Milliseconds()
@@ -175,8 +179,8 @@ func (e *Evaluator) runCase(ctx context.Context, evalCase *EvalCase) (EvalResult
 // evaluateSpec compares the generated request spec against expected values
 func (e *Evaluator) evaluateSpec(spec *httpx.RequestSpec, evalCase *EvalCase) (float64, string) {
 	var reasons []string
-	var score float64 = 1.0
-	var deductions float64 = 0.0
+	score := 1.0
+	deductions := 0.0
 
 	// Check HTTP method
 	if evalCase.ExpectedMethod != "" && spec.Method != evalCase.ExpectedMethod {
@@ -353,10 +357,11 @@ func GenerateReport(results []EvalResult) string {
 	}
 
 	avgScore := totalScore / float64(totalTests)
-	successRate := float64(successCount) / float64(totalTests) * 100
+	const percentMultiplier = 100
+	successRate := float64(successCount) / float64(totalTests) * percentMultiplier
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("## Evaluation Report\n\n"))
+	sb.WriteString("## Evaluation Report\n\n")
 	sb.WriteString(fmt.Sprintf("- Total Tests: %d\n", totalTests))
 	sb.WriteString(fmt.Sprintf("- Successful Tests: %d (%.1f%%)\n", successCount, successRate))
 	sb.WriteString(fmt.Sprintf("- Average Score: %.2f\n\n", avgScore))

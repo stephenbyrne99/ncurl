@@ -11,6 +11,11 @@ import (
 	"time"
 )
 
+const (
+	successMark = "✓"
+	failureMark = "✗"
+)
+
 // Entry represents a single command in the history
 type Entry struct {
 	Timestamp time.Time `json:"timestamp"`
@@ -24,6 +29,14 @@ type Manager struct {
 	maxEntries  int
 }
 
+// NewTestManager creates a manager for testing purposes
+func NewTestManager(historyFile string, maxEntries int) *Manager {
+	return &Manager{
+		historyFile: historyFile,
+		maxEntries:  maxEntries,
+	}
+}
+
 // NewManager creates a new history manager
 func NewManager(maxEntries int) (*Manager, error) {
 	home, err := os.UserHomeDir()
@@ -33,8 +46,8 @@ func NewManager(maxEntries int) (*Manager, error) {
 
 	// Create .ncurl directory if it doesn't exist
 	configDir := filepath.Join(home, ".ncurl")
-	if err := os.MkdirAll(configDir, 0o750); err != nil {
-		return nil, fmt.Errorf("failed to create config directory: %w", err)
+	if mkdirErr := os.MkdirAll(configDir, 0o750); mkdirErr != nil {
+		return nil, fmt.Errorf("failed to create config directory: %w", mkdirErr)
 	}
 
 	return &Manager{
@@ -145,9 +158,9 @@ func (m *Manager) PrintHistory() error {
 	fmt.Println("Command History:")
 	fmt.Println("---------------")
 	for i, entry := range entries {
-		status := "✓"
+		status := successMark
 		if !entry.Success {
-			status = "✗"
+			status = failureMark
 		}
 		fmt.Printf("%d. [%s] %s (%s)\n", i+1, status, entry.Command, entry.Timestamp.Format("2006-01-02 15:04:05"))
 	}
@@ -210,9 +223,9 @@ func (m *Manager) PrintSearchResults(term string) error {
 	fmt.Printf("Commands matching '%s':\n", term)
 	fmt.Println("---------------")
 	for i, entry := range results {
-		status := "✓"
+		status := successMark
 		if !entry.Success {
-			status = "✗"
+			status = failureMark
 		}
 		fmt.Printf("%d. [%s] %s (%s)\n", i+1, status, entry.Command, entry.Timestamp.Format("2006-01-02 15:04:05"))
 	}
@@ -228,15 +241,15 @@ func (m *Manager) PromptForHistorySelection() (string, error) {
 	}
 
 	if len(entries) == 0 {
-		return "", fmt.Errorf("no command history available")
+		return "", errors.New("no command history available")
 	}
 
 	fmt.Println("Command History:")
 	fmt.Println("---------------")
 	for i, entry := range entries {
-		status := "✓"
+		status := successMark
 		if !entry.Success {
-			status = "✗"
+			status = failureMark
 		}
 		fmt.Printf("%d. [%s] %s (%s)\n", i+1, status, entry.Command, entry.Timestamp.Format("2006-01-02 15:04:05"))
 	}
@@ -249,7 +262,7 @@ func (m *Manager) PromptForHistorySelection() (string, error) {
 	}
 
 	if selectedIndex == 0 {
-		return "", fmt.Errorf("selection cancelled")
+		return "", errors.New("selection cancelled")
 	}
 
 	if selectedIndex < 1 || selectedIndex > len(entries) {

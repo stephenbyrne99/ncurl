@@ -280,8 +280,8 @@ func LoadTestCasesFromFile(filePath string) ([]EvalCase, error) {
 	}
 
 	var cases []EvalCase
-	if err := json.Unmarshal(data, &cases); err != nil {
-		return nil, fmt.Errorf("failed to parse test cases: %w", err)
+	if unmarshalErr := json.Unmarshal(data, &cases); unmarshalErr != nil {
+		return nil, fmt.Errorf("failed to parse test cases: %w", unmarshalErr)
 	}
 
 	return cases, nil
@@ -300,8 +300,8 @@ func SaveTestCasesToFile(cases []EvalCase, filePath string) error {
 		return fmt.Errorf("failed to marshal test cases: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0600); err != nil {
-		return fmt.Errorf("failed to write test cases file: %w", err)
+	if writeErr := os.WriteFile(filePath, data, 0600); writeErr != nil {
+		return fmt.Errorf("failed to write test cases file: %w", writeErr)
 	}
 
 	return nil
