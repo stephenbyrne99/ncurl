@@ -113,7 +113,7 @@ func DefaultTestCases() []EvalCase {
 			ExpectedMethod: "", // Any method is acceptable
 			ExpectedURL:    "", // Any URL is acceptable
 		},
-		
+
 		// 10 Additional developer-focused test cases
 		{
 			ID:             "api-versioning",
@@ -193,7 +193,7 @@ func DefaultTestCases() []EvalCase {
 			ExpectedMethod: "OPTIONS",
 			ExpectedURL:    "api.example.com/data",
 			ExpectedHeaders: map[string]string{
-				"Origin": "https://myapp.com",
+				"Origin":                        "https://myapp.com",
 				"Access-Control-Request-Method": "GET",
 			},
 		},
@@ -204,7 +204,7 @@ func DefaultTestCases() []EvalCase {
 			ExpectedMethod: "GET",
 			ExpectedURL:    "github.com/rate_limit",
 		},
-		
+
 		// Local development test cases
 		{
 			ID:             "localhost-default",
@@ -244,7 +244,7 @@ func DefaultTestCases() []EvalCase {
 			ExpectedHeaders: map[string]string{
 				"Content-Type": "application/json",
 			},
-			ExpectedBody:   "query",
+			ExpectedBody: "query",
 		},
 		{
 			ID:             "localhost-express-api",
@@ -268,11 +268,11 @@ func DefaultTestCases() []EvalCase {
 
 // Load test cases from a JSON file
 func LoadTestCasesFromFile(filePath string) ([]EvalCase, error) {
-	f, err := os.Open(filePath)
+	f, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, fmt.Errorf("failed to open test cases file: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	data, err := io.ReadAll(f)
 	if err != nil {
@@ -291,7 +291,7 @@ func LoadTestCasesFromFile(filePath string) ([]EvalCase, error) {
 func SaveTestCasesToFile(cases []EvalCase, filePath string) error {
 	// Ensure the directory exists
 	dir := filepath.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0750); err != nil {
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
@@ -300,7 +300,7 @@ func SaveTestCasesToFile(cases []EvalCase, filePath string) error {
 		return fmt.Errorf("failed to marshal test cases: %w", err)
 	}
 
-	if err := os.WriteFile(filePath, data, 0644); err != nil {
+	if err := os.WriteFile(filePath, data, 0600); err != nil {
 		return fmt.Errorf("failed to write test cases file: %w", err)
 	}
 

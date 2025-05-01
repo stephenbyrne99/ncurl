@@ -26,7 +26,7 @@ func main() {
 	jsonFlag := flag.Bool("json", false, "Output results in JSON format")
 	genTestsFlag := flag.Bool("gen-tests", false, "Generate a template test cases file")
 	genTestsOutputFlag := flag.String("gen-tests-output", "testcases.json", "Path to save generated test cases")
-	
+
 	// Custom usage message
 	flag.Usage = func() {
 		fmt.Println("ncurl-eval - Evaluation tool for ncurl")
@@ -98,13 +98,13 @@ func main() {
 				filtered = append(filtered, tc)
 			}
 		}
-		
+
 		if len(filtered) == 0 {
 			fmt.Fprintf(os.Stderr, "No test case found with ID: %s\n", *runIDFlag)
 			exitCode = 1
 			return
 		}
-		
+
 		testCases = filtered
 	}
 
@@ -149,18 +149,18 @@ func main() {
 	if *outputFile != "" {
 		// Ensure directory exists
 		dir := filepath.Dir(*outputFile)
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		if err := os.MkdirAll(dir, 0750); err != nil {
 			fmt.Fprintf(os.Stderr, "Error creating output directory: %v\n", err)
 			exitCode = 1
 			return
 		}
-		
-		if err := os.WriteFile(*outputFile, []byte(output), 0644); err != nil {
+
+		if err := os.WriteFile(*outputFile, []byte(output), 0600); err != nil {
 			fmt.Fprintf(os.Stderr, "Error writing output file: %v\n", err)
 			exitCode = 1
 			return
 		}
-		
+
 		fmt.Printf("Evaluation results saved to %s\n", *outputFile)
 	} else {
 		// Print to stdout
@@ -172,17 +172,17 @@ func main() {
 		totalTests := len(results)
 		successCount := 0
 		var totalScore float64
-		
+
 		for _, r := range results {
 			if r.Success {
 				successCount++
 			}
 			totalScore += r.Score
 		}
-		
+
 		avgScore := totalScore / float64(totalTests)
 		successRate := float64(successCount) / float64(totalTests) * 100
-		
+
 		fmt.Fprintf(os.Stderr, "Evaluation Summary:\n")
 		fmt.Fprintf(os.Stderr, "- Total Tests: %d\n", totalTests)
 		fmt.Fprintf(os.Stderr, "- Successful Tests: %d (%.1f%%)\n", successCount, successRate)

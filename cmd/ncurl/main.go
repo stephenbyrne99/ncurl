@@ -17,14 +17,6 @@ import (
 	"github.com/stephenbyrne99/ncurl/internal/llm"
 )
 
-// min returns the smaller of x or y.
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 // Version information set by goreleaser
 var (
 	version = "dev"
@@ -276,7 +268,7 @@ func main() {
 	if *jsonOnly {
 		// For JSON-only mode, write the raw body without conversion for binary data
 		if isBinary {
-			os.Stdout.Write(response.Body)
+			_, _ = os.Stdout.Write(response.Body)
 		} else {
 			// For text-based content, use print which does string conversion
 			fmt.Print(string(response.Body))
@@ -303,7 +295,7 @@ func main() {
 		// Print the response body
 		if isBinary {
 			// For binary data, write raw bytes
-			os.Stdout.Write(response.Body)
+			_, _ = os.Stdout.Write(response.Body)
 			fmt.Println() // Add a newline after binary data
 		} else {
 			// For text data, convert to string
