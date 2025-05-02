@@ -100,7 +100,4 @@ npms:
     author: "Stephen Byrne"
     repository: "https://github.com/stephenbyrne99/ncurl"
     bugs: "https://github.com/stephenbyrne99/ncurl/issues"
-    extra_files:
-      - glob: "./README.md"
-      - glob: "./LICENSE"
     access: public
