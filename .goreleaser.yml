@@ -34,9 +34,17 @@ archives:
       {{ .ProjectName }}_{{ .Version }}_
       {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{- end }}_
       {{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "arm" }}arm_{{ .Arm }}{{- else }}{{ .Arch }}{{- end }}
-    formats:
-      - tar.gz
-      - zip
+    format: tar.gz
+    files:
+      - README.md
+      - LICENSE
+
+  - id: zip-archives
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{- end }}_
+      {{- if eq .Arch "amd64" }}x86_64{{- else if eq .Arch "arm" }}arm_{{ .Arm }}{{- else }}{{ .Arch }}{{- end }}
+    format: zip
     files:
       - README.md
       - LICENSE
@@ -50,6 +58,10 @@ release:
   disable: auto
   draft: false
   prerelease: auto
+  
+  # Explicitly select which builds to include in the release
+  ids:
+    - default
 
 changelog:
   sort: asc
@@ -73,6 +85,7 @@ changelog:
 
 brews:
   - name: ncurl
+    goarm: "7"
     ids:
       - default
     repository:
