@@ -30,60 +30,7 @@ go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
 ```bash
 npm install -g ncurl
 ```
-
-
-## 💾 Installation
-
-### Prerequisites
-
-- **Go**: Version 1.22 or higher is required.
-
-#### Installing Go
-
-**macOS:**
-```bash
-# Using Homebrew
-brew install go
-
-# Or download the installer from https://go.dev/dl/
-```
-
-**Linux:**
-```bash
-# Ubuntu/Debian
-sudo apt-get update
-sudo apt-get install golang-go
-
-# Fedora
-sudo dnf install golang
-
-# Arch Linux
-sudo pacman -S go
-```
-
-**Windows:**
-```bash
-# Using Chocolatey
-choco install golang
-
-# Using Scoop
-scoop install go
-
-# Or download the installer from https://go.dev/dl/
-```
-
-Verify your installation:
-```bash
-go version
-```
-
-### Option 1: Using Go Install
-
-```bash
-go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
-```
-
-### Option 2: Using npm
+npm
 
 ```bash
 npm install -g ncurl

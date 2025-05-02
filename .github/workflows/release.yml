@@ -8,7 +8,7 @@ on:
 jobs:
   release:
     runs-on: ubuntu-latest
-    permissons:
+    permissions:
       contents: read
       id-token: write
     steps:
@@ -40,7 +40,7 @@ jobs:
   publish-npm:
     needs: [release]
     runs-on: ubuntu-latest
-    permissons:
+    permissions:
       contents: read
       id-token: write
     steps:
