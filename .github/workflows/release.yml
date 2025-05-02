@@ -22,6 +22,12 @@ jobs:
         with:
           go-version: '1.22'
       
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org/'
+      
       - name: Update CHANGELOG
         id: changelog
         continue-on-error: true
@@ -39,5 +45,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
   
