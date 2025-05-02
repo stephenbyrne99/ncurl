@@ -73,7 +73,9 @@ changelog:
 
 brews:
   - name: ncurl
-    repository:
+    ids:
+      - default
+    tap:
       owner: stephenbyrne99
       name: homebrew-tap
     commit_author:
