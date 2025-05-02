@@ -17,6 +17,21 @@
 
 ---
 
+## Quick install
+
+### Option 1: Using Go Install
+
+```bash
+go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
+```
+
+### Option 2: Using npm
+
+```bash
+npm install -g ncurl
+```
+
+
 ## 💾 Installation
 
 ### Prerequisites

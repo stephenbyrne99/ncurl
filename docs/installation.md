@@ -9,14 +9,6 @@ ncurl (natural language curl) is a command-line tool that lets you make HTTP req
 
 ## Installation Methods
 
-### Using Homebrew (macOS and Linux)
-
-```bash
-brew install stephenbyrne99/ncurl/ncurl
-```
-
-After installation, you'll need to set up your API key as described in the [API Key Setup](#api-key-setup) section below.
-
 ### Using NPM (Cross-platform)
 
 ```bash
