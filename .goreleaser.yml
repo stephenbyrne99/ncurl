@@ -75,7 +75,7 @@ brews:
   - name: ncurl
     ids:
       - default
-    tap:
+    repository:
       owner: stephenbyrne99
       name: homebrew-tap
     commit_author:
