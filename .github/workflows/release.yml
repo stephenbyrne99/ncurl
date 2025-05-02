@@ -85,11 +85,6 @@ jobs:
             exit 1
           fi
           
-      - name: Install dependencies
-        run: |
-          cd npm
-          npm ci
-          
       - name: Publish to NPM
         run: |
           cd npm

@@ -1,4 +1,5 @@
 # GoReleaser configuration for ncurl
+version: 2
 project_name: ncurl
 
 before:
@@ -26,17 +27,16 @@ builds:
     ldflags:
       - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}} -X main.date={{.Date}}
 
+# GoReleaser v2 archive configuration
 archives:
-  - format: tar.gz
-    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    replacements:
-      darwin: macOS
-      linux: Linux
-      windows: Windows
-      amd64: x86_64
-    format_overrides:
-      - goos: windows
-        format: zip
+  - id: default
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_
+      {{- if eq .Os "darwin" }}macOS{{- else }}{{ .Os }}{{- end }}_
+      {{- if eq .Arch "amd64" }}x86_64{{- else }}{{ .Arch }}{{- end }}
+    formats:
+      - tar.gz
+      - zip
     files:
       - README.md
       - LICENSE
@@ -45,8 +45,11 @@ checksum:
   name_template: "{{ .ProjectName }}_{{ .Version }}_checksums.txt"
   algorithm: sha256
 
-snapshot:
-  name_template: "{{ .Tag }}-snapshot"
+# For v2, snapshot configuration is under release
+release:
+  disable: auto
+  draft: false
+  prerelease: auto
 
 changelog:
   sort: asc
@@ -70,7 +73,7 @@ changelog:
 
 brews:
   - name: ncurl
-    tap:
+    repository:
       owner: stephenbyrne99
       name: homebrew-tap
     commit_author:
