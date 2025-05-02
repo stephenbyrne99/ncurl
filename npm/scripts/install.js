@@ -42,9 +42,9 @@ const install = () => {
   
   try {
     binary.install();
-    console.log(`Successfully installed nlcurl v${version} for ${platform} ${arch}`);
+    console.log(`Successfully installed ncurl v${version} for ${platform} ${arch}`);
   } catch (error) {
-    console.error(`Error installing nlcurl: ${error.message}`);
+    console.error(`Error installing ncurl: ${error.message}`);
     process.exit(1);
   }
 };

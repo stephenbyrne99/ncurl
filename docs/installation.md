@@ -20,10 +20,8 @@ After installation, you'll need to set up your API key as described in the [API 
 ### Using NPM (Cross-platform)
 
 ```bash
-npm install -g nlcurl
+npm install -g ncurl
 ```
-
-This will install the `nlcurl` command which is identical to `ncurl`. After installation, you'll need to set up your API key as described in the [API Key Setup](#api-key-setup) section below.
 
 ### Using the Installation Script (Recommended)
 

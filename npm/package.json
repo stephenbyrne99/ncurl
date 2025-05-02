@@ -1,9 +1,9 @@
 {
-  "name": "nlcurl",
+  "name": "ncurl",
   "version": "0.1.0",
   "description": "curl in English - describe HTTP requests in plain language",
   "bin": {
-    "nlcurl": "./bin/nlcurl.js"
+    "ncurl": "./bin/ncurl.js"
   },
   "scripts": {
     "postinstall": "node ./scripts/install.js"
