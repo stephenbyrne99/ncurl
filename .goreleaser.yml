@@ -83,21 +83,24 @@ changelog:
       - Merge pull request
       - Merge branch
 
-brews:
-  - name: ncurl
-    goarm: "7"
+# NPM Configuration
+npms:
+  - name: "@stephen_byrne_/ncurl"
     ids:
       - default
-    repository:
-      owner: stephenbyrne99
-      name: homebrew-tap
-    commit_author:
-      name: goreleaserbot
-      email: goreleaser@carlosbecker.com
     description: "curl in English - describe HTTP requests in plain language"
     homepage: "https://github.com/stephenbyrne99/ncurl"
+    keywords:
+      - curl
+      - http
+      - cli
+      - llm
+      - ai
     license: "MIT"
-    test: |
-      system "#{bin}/ncurl", "--version"
-    install: |
-      bin.install "ncurl"
+    author: "Stephen Byrne"
+    repository: "https://github.com/stephenbyrne99/ncurl"
+    bugs: "https://github.com/stephenbyrne99/ncurl/issues"
+    extra_files:
+      - glob: "./README.md"
+      - glob: "./LICENSE"
+    access: public

@@ -33,63 +33,12 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
+          distribution: goreleaser-pro
           version: v2.9.0
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          GORELEASER_KEY: ${{ secrets.GORELEASER_KEY }}
   
-  publish-npm:
-    needs: [release]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.x'
-          registry-url: 'https://registry.npmjs.org/'
-          
-      - name: Extract version from tag
-        id: get_version
-        run: |
-          # Extract the version number from the Git tag
-          VERSION="${GITHUB_REF#refs/tags/v}"
-          echo "Raw version from tag: $VERSION"
-          
-          # Validate the version format
-          if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9\.]+)?$ ]]; then
-            echo "Error: Version format is invalid: $VERSION"
-            echo "Expected format: MAJOR.MINOR.PATCH or MAJOR.MINOR.PATCH-PRERELEASE"
-            exit 1
-          fi
-          
-          echo "VERSION=$VERSION" >> $GITHUB_ENV
-          echo "Using version: $VERSION"
-          
-      - name: Update package.json version
-        run: |
-          cd npm
-          npm version $VERSION --no-git-tag-version
-          
-      - name: Verify npm package version
-        run: |
-          cd npm
-          NPM_VERSION=$(node -p "require('./package.json').version")
-          echo "NPM package.json version: $NPM_VERSION"
-          if [ "$NPM_VERSION" != "$VERSION" ]; then
-            echo "Error: NPM version ($NPM_VERSION) does not match release version ($VERSION)"
-            exit 1
-          fi
-          
-      - name: Publish to NPM
-        run: |
-          cd npm
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+# npm publishing is now handled by GoReleaser
