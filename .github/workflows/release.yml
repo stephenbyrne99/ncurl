@@ -31,16 +31,11 @@ jobs:
           tag: ${{ github.ref_name }}
       
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v5
+        uses: goreleaser/goreleaser-action@v6
         with:
-          name: Run GoReleaser
-          uses: goreleaser/goreleaser-action@v6
-          with:
-            # either 'goreleaser' (default) or 'goreleaser-pro'
-            distribution: goreleaser
-            # 'latest', 'nightly', or a semver
-            version: '~> v2'
-            args: release --clean
+          distribution: goreleaser-pro
+          version: '~> v2'
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
