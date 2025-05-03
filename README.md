@@ -22,7 +22,7 @@
 ### Option 1: Using Go Install
 
 ```bash
-go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
+go install github.com/stephenbyrne99/ncurl@latest
 ```
 
 ### Option 2: Using npm

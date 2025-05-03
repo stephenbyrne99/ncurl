@@ -34,6 +34,14 @@ The script will:
 3. **Automatically add the bin directory to your PATH**
 4. **Help you set up your Anthropic API key**
 
+### Using Go Install
+
+You can install the latest version directly with Go:
+
+```bash
+go install github.com/stephenbyrne99/ncurl@latest
+```
+
 ### Building from Source (Manual Method)
 
 If you prefer to handle the installation manually:
