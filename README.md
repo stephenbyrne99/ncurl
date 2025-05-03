@@ -28,12 +28,7 @@ go install github.com/stephenbyrne99/ncurl/cmd/ncurl@latest
 ### Option 2: Using npm
 
 ```bash
-npm install -g ncurl
-```
-npm
-
-```bash
-npm install -g ncurl
+npm install -g @stephen_byrne_/ncurl
 ```
 
 This will download the pre-built binary for your platform.

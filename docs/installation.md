@@ -12,7 +12,7 @@ ncurl (natural language curl) is a command-line tool that lets you make HTTP req
 ### Using NPM (Cross-platform)
 
 ```bash
-npm install -g ncurl
+npm install -g @stephen_byrne_/ncurl
 ```
 
 ### Using the Installation Script (Recommended)
