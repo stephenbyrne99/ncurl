@@ -1,4 +1,4 @@
-# ncurl – Natural Language HTTP Client ⚡️
+# ncurl – cURL in natural language 
 
 [![CI](https://github.com/stephenbyrne99/ncurl/actions/workflows/ci.yml/badge.svg)](https://github.com/stephenbyrne99/ncurl/actions/workflows/ci.yml)
 [![Go Reference](https://pkg.go.dev/badge/github.com/stephenbyrne99/ncurl.svg)](https://pkg.go.dev/github.com/stephenbyrne99/ncurl)
@@ -153,6 +153,10 @@ Contributions are welcome! Please check out the [contributing guidelines](CONTRI
 1. Fork & clone, then run `go vet ./...` before opening a PR.
 2. Keep commits small and descriptive.
 3. All checks must pass before merge.
+
+
+## Why?
+I wanted to square off codex vs claude code on building something I would find mildly useful, and have them get it to a complete + production level with as little input as possible.
 
 ## 📝 License
 
