@@ -5,6 +5,8 @@
 
 `ncurl` lets you describe HTTP requests in plain language. It uses Anthropic's Claude to translate your description into a fully-specified request, executes it, and returns the results.
 
+WARNING: Pure vibe coded to test claude code vs codex - not production ready.
+
 ## ✨ Features
 
 - **Natural Language Interface**: Describe API requests however you want
