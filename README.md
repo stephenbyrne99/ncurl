@@ -21,16 +21,16 @@ WARNING: Pure vibe coded to test claude code vs codex - not production ready.
 
 ## Quick install
 
-### Option 1: Using Go Install
-
-```bash
-go install github.com/stephenbyrne99/ncurl@latest
-```
-
-### Option 2: Using npm
+### Option 1: Using npm
 
 ```bash
 npm install -g @stephen_byrne_/ncurl
+```
+
+### Option 2: Using Go Install
+
+```bash
+go install github.com/stephenbyrne99/ncurl@latest
 ```
 
 This will download the pre-built binary for your platform.
